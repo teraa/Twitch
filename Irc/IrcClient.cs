@@ -1,19 +1,29 @@
-﻿using System.Collections.Concurrent;
-using Teraa.Irc;
+﻿using Teraa.Irc;
+
 namespace Twitch.Irc;
 
-public class IrcClient
+public interface IIrcClient
+{
+    event Func<Message, ValueTask>? MessageReceived;
+    void EnqueueMessage(Message message);
+}
+
+public class IrcClient : IIrcClient, IDisposable
 {
     private readonly WsClient _client;
-    private readonly PriorityQueue<Message, int> _sendQueue;
 
     public IrcClient(WsClient client)
     {
         _client = client;
-        _sendQueue = new();
     }
 
     public event Func<Message, ValueTask>? MessageReceived;
+
+    public void EnqueueMessage(Message message)
+    {
+        // TODO
+        throw new NotImplementedException();
+    }
 
     public async Task ReceiverAsync(CancellationToken cancellationToken)
     {
@@ -29,6 +39,7 @@ public class IrcClient
 
             Message message = Message.Parse(rawMessage);
 
+            // TODO
             if (MessageReceived is { } func)
                 await func(message).ConfigureAwait(false);
         }
@@ -39,5 +50,10 @@ public class IrcClient
         await Task.Yield();
 
         // System.Threading.Channels
+    }
+
+    public void Dispose()
+    {
+        _client.Dispose();
     }
 }

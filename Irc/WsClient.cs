@@ -6,7 +6,16 @@ using System.Text;
 
 namespace Twitch.Irc;
 
-public class WsClient : IDisposable
+public interface IClient
+{
+    bool IsConnected { get; }
+    Task ConnectAsync(Uri uri, CancellationToken cancellationToken = default);
+    Task DisconnectAsync(CancellationToken cancellationToken = default);
+    Task<string?> ReceiveAsync(CancellationToken cancellationToken = default);
+    Task SendAsync(string message, CancellationToken cancellationToken = default);
+}
+
+public class WsClient : IClient, IDisposable
 {
     private ClientWebSocket? _client;
 

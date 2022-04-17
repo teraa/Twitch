@@ -1,15 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+        <OutputType>Exe</OutputType>
         <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>Twitch.Irc</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="System.IO.Pipelines" Version="6.0.2" />
-      <PackageReference Include="Teraa.IrcMessageParser" Version="2.1.0-alpha.10" />
+      <ProjectReference Include="..\Irc\Irc.csproj" />
     </ItemGroup>
 
 </Project>

@@ -15,8 +15,8 @@ public interface IIrcClient
     void EnqueueMessage(Message message);
 }
 
-public record MessageRequest(Message Message)
-    : IRequest;
+public record UnknownMessageRequest(string Message) : IRequest;
+public record MessageRequest(Message Message) : IRequest;
 
 public class IrcClientOptions
 {
@@ -100,24 +100,40 @@ public class IrcClient : IHostedService, IIrcClient
     {
         await Task.Yield();
 
-        // TODO: Try catch
-        while (true)
+        try
         {
-            string? rawMessage = await _client.ReceiveAsync(cancellationToken)
-                .ConfigureAwait(false);
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                string? rawMessage = await _client.ReceiveAsync(cancellationToken)
+                    .ConfigureAwait(false);
 
-            if (rawMessage is null)
-                break; // TODO: Signal end of socket
+                if (rawMessage is null)
+                    break; // End of socket
 
-            // TODO: try parse
-            Message message = Message.Parse(rawMessage);
-
-            // await _receiveChannel.Writer.WriteAsync(message, cancellationToken)
-            //     .ConfigureAwait(false);
-
-            await _mediator.Send(new MessageRequest(message), cancellationToken)
-                .ConfigureAwait(false);
+                if (Message.TryParse(rawMessage, out var message))
+                {
+                    await _mediator.Send(new MessageRequest(message), cancellationToken)
+                        .ConfigureAwait(false);
+                }
+                else
+                {
+                    await _mediator.Send(new UnknownMessageRequest(rawMessage), cancellationToken)
+                        .ConfigureAwait(false);
+                }
+            }
         }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Receiver error");
+        }
+
+        _logger.LogDebug("Receiver completed");
+
+        // if (!cancellationToken.IsCancellationRequested) { /* reconnect */ }
     }
 
     private async Task SenderAsync(CancellationToken cancellationToken)
@@ -131,5 +147,7 @@ public class IrcClient : IHostedService, IIrcClient
             await _client.SendAsync(rawMessage, cancellationToken)
                 .ConfigureAwait(false);
         }
+
+        _logger.LogDebug("Sender completed");
     }
 }

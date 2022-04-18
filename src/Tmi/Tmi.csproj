@@ -4,13 +4,14 @@
         <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>Twitch.Irc</RootNamespace>
+        <RootNamespace>Twitch.Tmi</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
       <PackageReference Include="MediatR" Version="10.0.1" />
       <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.1" />
+      <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
       <PackageReference Include="System.IO.Pipelines" Version="6.0.2" />
       <PackageReference Include="Teraa.IrcMessageParser" Version="2.1.0-alpha.10" />
     </ItemGroup>

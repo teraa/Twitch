@@ -4,12 +4,13 @@ using System.Threading.Channels;
 using MediatR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Teraa.Irc;
-using Twitch.Irc.Notifications;
+using Twitch.Tmi.Notifications;
 
-namespace Twitch.Irc;
+namespace Twitch.Tmi;
 
-public interface IIrcClient
+public interface ITmiService
 {
     bool IsStarted { get; }
     Task StartAsync(CancellationToken cancellationToken = default);
@@ -17,27 +18,27 @@ public interface IIrcClient
     void EnqueueMessage(Message message);
 }
 
-public class IrcClientOptions
+public class TmiServiceOptions
 {
     public Uri Uri { get; set; } = new Uri("wss://irc-ws.chat.twitch.tv:443");
 }
 
-public class IrcClient : IHostedService, IIrcClient, IDisposable
+public class TmiService : IHostedService, ITmiService, IDisposable
 {
     private readonly IClient _client;
     private readonly Channel<Message> _sendChannel;
     private readonly IMediator _mediator;
-    private readonly IrcClientOptions _options;
-    private readonly ILogger<IrcClient> _logger;
+    private readonly TmiServiceOptions _options;
+    private readonly ILogger<TmiService> _logger;
     private readonly SemaphoreSlim _sem;
     private Task? _receiverTask, _senderTask;
     private CancellationTokenSource? _cts;
 
-    public IrcClient(IClient client, IMediator mediator, IrcClientOptions options, ILogger<IrcClient> logger)
+    public TmiService(IClient client, IMediator mediator, IOptions<TmiServiceOptions> options, ILogger<TmiService> logger)
     {
         _client = client;
         _mediator = mediator;
-        _options = options;
+        _options = options.Value;
         _logger = logger;
 
         _sem = new SemaphoreSlim(1, 1);

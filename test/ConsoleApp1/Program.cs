@@ -1,4 +1,4 @@
-﻿using Twitch.Irc;
+﻿using Twitch.Tmi;
 
 var client = new WsClient();
 // await client.ConnectAsync(new Uri("ws://localhost:5033/ws"));

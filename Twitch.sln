@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Irc", "src\Irc\Irc.csproj", "{55C21F5C-EF1D-49F8-A615-3BF2DF94C430}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tmi", "src\Tmi\Tmi.csproj", "{55C21F5C-EF1D-49F8-A615-3BF2DF94C430}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WsServer", "test\WsServer\WsServer.csproj", "{B95D44F4-E1E9-4713-A1B1-B8F23A988D5E}"
 EndProject

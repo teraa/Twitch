@@ -3,8 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Teraa.Irc;
-using Twitch.Irc;
-using Twitch.Irc.Notifications;
+using Twitch.Tmi;
+using Twitch.Tmi.Notifications;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Verbose()
@@ -19,11 +19,11 @@ var services = new ServiceCollection()
     })
     .AddMediatR(typeof(Program))
     .AddSingleton<IClient>(new WsClient())
-    .AddSingleton<IrcClientOptions>()
-    .AddSingleton<IIrcClient, IrcClient>()
+    .AddSingleton<TmiServiceOptions>()
+    .AddSingleton<ITmiService, TmiService>()
     .BuildServiceProvider();
 
-var client = services.GetRequiredService<IIrcClient>();
+var client = services.GetRequiredService<ITmiService>();
 await client.StartAsync();
 
 string? line;
@@ -55,11 +55,11 @@ await client.StopAsync();
 
 public class MessageHandler : INotificationHandler<MessageReceived>
 {
-    private readonly IIrcClient _client;
+    private readonly ITmiService _tmi;
 
-    public MessageHandler(IIrcClient client)
+    public MessageHandler(ITmiService tmi)
     {
-        _client = client;
+        _tmi = tmi;
     }
 
     public Task Handle(MessageReceived received, CancellationToken cancellationToken)
@@ -68,7 +68,7 @@ public class MessageHandler : INotificationHandler<MessageReceived>
             throw new ArgumentException("pong");
 
         if (received.Message is {Command: Command.PING})
-            _client.EnqueueMessage(new Message {Command = Command.PONG});
+            _tmi.EnqueueMessage(new Message {Command = Command.PONG});
 
         return Task.CompletedTask;
     }
@@ -76,19 +76,19 @@ public class MessageHandler : INotificationHandler<MessageReceived>
 
 public class ConnectedHandler : INotificationHandler<Connected>
 {
-    private readonly IIrcClient _client;
+    private readonly ITmiService _tmi;
     private readonly ILogger<ConnectedHandler> _logger;
 
-    public ConnectedHandler(IIrcClient client, ILogger<ConnectedHandler> logger)
+    public ConnectedHandler(ITmiService tmi, ILogger<ConnectedHandler> logger)
     {
-        _client = client;
+        _tmi = tmi;
         _logger = logger;
     }
 
     public Task Handle(Connected notification, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Connected!");
-        _client.EnqueueMessage(Message.Parse("nick justinfan1"));
+        _tmi.EnqueueMessage(Message.Parse("nick justinfan1"));
 
         return Task.CompletedTask;
     }

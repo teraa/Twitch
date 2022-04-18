@@ -58,6 +58,8 @@ public class IrcClient : IIrcClient
 
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
+        if (IsStarted) return;
+
         await _client.ConnectAsync(_options.Uri, cancellationToken)
             .ConfigureAwait(false);
 
@@ -69,10 +71,10 @@ public class IrcClient : IIrcClient
 
     public async Task StopAsync(CancellationToken cancellationToken = default)
     {
+        if (!IsStarted) return;
+
         await _client.DisconnectAsync(cancellationToken)
             .ConfigureAwait(false);
-
-        if (!IsStarted) return;
 
         IsStarted = false;
 

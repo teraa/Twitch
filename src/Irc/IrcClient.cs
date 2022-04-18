@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
 using MediatR;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Teraa.Irc;
 
@@ -22,7 +23,7 @@ public class IrcClientOptions
     public Uri Uri { get; set; } = new Uri("wss://irc-ws.chat.twitch.tv:443");
 }
 
-public class IrcClient : IIrcClient
+public class IrcClient : IHostedService, IIrcClient
 {
     private readonly IClient _client;
     private readonly Channel<Message> _receiveChannel;

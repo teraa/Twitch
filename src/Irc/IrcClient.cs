@@ -60,8 +60,8 @@ public class IrcClient : IHostedService, IIrcClient, IDisposable
         {
             if (IsStarted) return;
 
-        await _client.ConnectAsync(_options.Uri, cancellationToken)
-            .ConfigureAwait(false);
+            await _client.ConnectAsync(_options.Uri, cancellationToken)
+                .ConfigureAwait(false);
 
             _cts = new CancellationTokenSource();
             _receiverTask = ReceiverAsync(_cts.Token);
@@ -82,12 +82,12 @@ public class IrcClient : IHostedService, IIrcClient, IDisposable
         {
             if (!IsStarted) return;
 
-        await _client.DisconnectAsync(cancellationToken)
-            .ConfigureAwait(false);
+            await _client.DisconnectAsync(cancellationToken)
+                .ConfigureAwait(false);
 
-        IsStarted = false;
+            IsStarted = false;
 
-        _cts.Cancel();
+            _cts.Cancel();
 
             try { await _receiverTask; }
             catch (OperationCanceledException) { }
@@ -141,10 +141,7 @@ public class IrcClient : IHostedService, IIrcClient, IDisposable
                 }
             }
         }
-        catch (OperationCanceledException)
-        {
-            return;
-        }
+        catch (OperationCanceledException) { }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Receiver error");
@@ -159,15 +156,25 @@ public class IrcClient : IHostedService, IIrcClient, IDisposable
     {
         await Task.Yield();
 
-        await foreach (var message in _sendChannel.Reader.ReadAllAsync(cancellationToken)
-                           .ConfigureAwait(false))
+        try
         {
-            string rawMessage = message.ToString();
-            await _client.SendAsync(rawMessage, cancellationToken)
-                .ConfigureAwait(false);
+            await foreach (var message in _sendChannel.Reader.ReadAllAsync(cancellationToken)
+                               .ConfigureAwait(false))
+            {
+                string rawMessage = message.ToString();
+                await _client.SendAsync(rawMessage, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Sender error");
         }
 
         _logger.LogDebug("Sender completed");
+
+        // if (!cancellationToken.IsCancellationRequested) { /* reconnect */ }
     }
 
     public void Dispose()

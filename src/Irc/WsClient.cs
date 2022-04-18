@@ -92,6 +92,7 @@ public class WsClient : IClient, IDisposable
         }
 
         string message = (await _sr.ReadLineAsync().ConfigureAwait(false))!;
+        // TODO: what happens when there is multiple newlines in a row without other characters
         Debug.Assert(message is {Length: > 0});
 
         if (_sr.EndOfStream)

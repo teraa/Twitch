@@ -15,8 +15,8 @@ public interface IIrcClient
     void EnqueueMessage(Message message);
 }
 
-public record UnknownMessageRequest(string Message) : IRequest;
-public record MessageRequest(Message Message) : IRequest;
+public record UnknownMessageNotification(string Message) : INotification;
+public record MessageNotification(Message Message) : INotification;
 
 public class IrcClientOptions
 {
@@ -112,12 +112,12 @@ public class IrcClient : IHostedService, IIrcClient
 
                 if (Message.TryParse(rawMessage, out var message))
                 {
-                    await _mediator.Send(new MessageRequest(message), cancellationToken)
+                    await _mediator.Publish(new MessageNotification(message), cancellationToken)
                         .ConfigureAwait(false);
                 }
                 else
                 {
-                    await _mediator.Send(new UnknownMessageRequest(rawMessage), cancellationToken)
+                    await _mediator.Publish(new UnknownMessageNotification(rawMessage), cancellationToken)
                         .ConfigureAwait(false);
                 }
             }

@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using Teraa.Irc;
 using Twitch.Irc;
@@ -39,11 +40,21 @@ while ((line = Console.ReadLine()) is not null)
 
 await client.StopAsync();
 
-public class Handler : AsyncRequestHandler<MessageRequest>
+public class Handler : INotificationHandler<MessageNotification>
 {
-    protected override Task Handle(MessageRequest request, CancellationToken cancellationToken)
+    private readonly ILogger<Handler> _logger;
+
+    public Handler(ILogger<Handler> logger)
     {
-        Console.WriteLine("recv: " + request.Message.ToString());
+        _logger = logger;
+    }
+
+    public Task Handle(MessageNotification notification, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("{Message}", notification.Message);
+
+        if (notification.Message.Command is Command.PONG)
+            throw new ArgumentException("pong");
 
         return Task.CompletedTask;
     }

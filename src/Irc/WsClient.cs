@@ -1,4 +1,5 @@
 ﻿using System.Buffers;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO.Pipelines;
 using System.Net.WebSockets;
@@ -18,6 +19,7 @@ public interface IClient
 public class WsClient : IClient, IDisposable
 {
     private ClientWebSocket? _client;
+    private StreamReader? _sr;
 
     [MemberNotNullWhen(true, nameof(_client))]
     public bool IsConnected { get; private set; }
@@ -59,32 +61,44 @@ public class WsClient : IClient, IDisposable
         if (!IsConnected)
             throw new InvalidOperationException("Client is not connected.");
 
-        await using MemoryStream ms = new();
-        PipeWriter writer = PipeWriter.Create(ms);
-        ValueWebSocketReceiveResult result;
-        do
+        if (_sr is null)
         {
-            Memory<byte> buffer = writer.GetMemory(512);
+            // Disposed when StreamReader is disposed
+            MemoryStream ms = new();
 
-            result = await _client.ReceiveAsync(buffer, cancellationToken)
+            // Disposed on end of stream or call to Dispose()
+            _sr = new StreamReader(ms, Encoding);
+
+            PipeWriter writer = PipeWriter.Create(ms);
+
+            ValueWebSocketReceiveResult result;
+            do
+            {
+                Memory<byte> buffer = writer.GetMemory(512);
+
+                result = await _client.ReceiveAsync(buffer, cancellationToken)
+                    .ConfigureAwait(false);
+
+                writer.Advance(result.Count);
+
+                if (result.MessageType is WebSocketMessageType.Close)
+                    return null;
+            } while (!result.EndOfMessage);
+
+            await writer.FlushAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            writer.Advance(result.Count);
+            ms.Seek(0, SeekOrigin.Begin);
+        }
 
-            if (result.MessageType is WebSocketMessageType.Close)
-                return null;
+        string message = (await _sr.ReadLineAsync().ConfigureAwait(false))!;
+        Debug.Assert(message is {Length: > 0});
 
-        } while (!result.EndOfMessage);
-
-        await writer.FlushAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        ms.Seek(0, SeekOrigin.Begin);
-
-        using StreamReader sr = new(ms, Encoding);
-
-        string message = await sr.ReadToEndAsync()
-            .ConfigureAwait(false);
+        if (_sr.EndOfStream)
+        {
+            _sr.Dispose();
+            _sr = null;
+        }
 
         return message;
     }
@@ -113,5 +127,6 @@ public class WsClient : IClient, IDisposable
     public void Dispose()
     {
         _client?.Dispose();
+        _sr?.Dispose();
     }
 }

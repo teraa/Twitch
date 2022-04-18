@@ -110,15 +110,20 @@ public class IrcClient : IHostedService, IIrcClient
                 if (rawMessage is null)
                     break; // End of socket
 
-                if (Message.TryParse(rawMessage, out var message))
+                bool parsed = Message.TryParse(rawMessage, out var message);
+
+                try
                 {
-                    await _mediator.Publish(new MessageNotification(message), cancellationToken)
-                        .ConfigureAwait(false);
+                    if (parsed)
+                        await _mediator.Publish(new MessageNotification(message), cancellationToken)
+                            .ConfigureAwait(false);
+                    else
+                        await _mediator.Publish(new UnknownMessageNotification(rawMessage), cancellationToken)
+                            .ConfigureAwait(false);
                 }
-                else
+                catch (Exception ex)
                 {
-                    await _mediator.Publish(new UnknownMessageNotification(rawMessage), cancellationToken)
-                        .ConfigureAwait(false);
+                    _logger.LogError(ex, "Error publishing received message");
                 }
             }
         }

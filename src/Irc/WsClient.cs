@@ -12,8 +12,20 @@ public interface IClient
     bool IsConnected { get; }
     Task ConnectAsync(Uri uri, CancellationToken cancellationToken = default);
     Task DisconnectAsync(CancellationToken cancellationToken = default);
-    Task<string?> ReceiveAsync(CancellationToken cancellationToken = default);
+    Task<ReceiveResult> ReceiveAsync(CancellationToken cancellationToken = default);
     Task SendAsync(string message, CancellationToken cancellationToken = default);
+}
+
+public readonly struct ReceiveResult
+{
+    public ReceiveResult(bool isClose, string? message)
+    {
+        IsClose = isClose;
+        Message = message;
+    }
+
+    public bool IsClose { get; }
+    public string? Message { get; }
 }
 
 public class WsClient : IClient, IDisposable
@@ -46,17 +58,21 @@ public class WsClient : IClient, IDisposable
 
         try
         {
-            await _client.CloseAsync(WebSocketCloseStatus.NormalClosure, default, cancellationToken)
-                .ConfigureAwait(false);
+            if (_client.State is WebSocketState.Open or WebSocketState.CloseReceived or WebSocketState.CloseSent)
+                await _client.CloseAsync(WebSocketCloseStatus.NormalClosure, default, cancellationToken)
+                    .ConfigureAwait(false);
         }
         finally
         {
             _client.Dispose();
             _client = null;
+
+            _sr?.Dispose();
+            _sr = null;
         }
     }
 
-    public async Task<string?> ReceiveAsync(CancellationToken cancellationToken = default)
+    public async Task<ReceiveResult> ReceiveAsync(CancellationToken cancellationToken = default)
     {
         if (!IsConnected)
             throw new InvalidOperationException("Client is not connected.");
@@ -82,7 +98,7 @@ public class WsClient : IClient, IDisposable
                 writer.Advance(result.Count);
 
                 if (result.MessageType is WebSocketMessageType.Close)
-                    return null;
+                    return new ReceiveResult(true, null);
             } while (!result.EndOfMessage);
 
             await writer.FlushAsync(cancellationToken)
@@ -91,7 +107,7 @@ public class WsClient : IClient, IDisposable
             ms.Seek(0, SeekOrigin.Begin);
         }
 
-        string message = (await _sr.ReadLineAsync().ConfigureAwait(false))!;
+        string? message = await _sr.ReadLineAsync().ConfigureAwait(false);
         // TODO: what happens when there is multiple newlines in a row without other characters
         Debug.Assert(message is {Length: > 0});
 
@@ -101,7 +117,7 @@ public class WsClient : IClient, IDisposable
             _sr = null;
         }
 
-        return message;
+        return new ReceiveResult(false, message);
     }
 
     public async Task SendAsync(string message, CancellationToken cancellationToken = default)

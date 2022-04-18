@@ -5,18 +5,17 @@ using MediatR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Teraa.Irc;
+using Twitch.Irc.Notifications;
 
 namespace Twitch.Irc;
 
 public interface IIrcClient
 {
+    bool IsStarted { get; }
     Task StartAsync(CancellationToken cancellationToken = default);
     Task StopAsync(CancellationToken cancellationToken = default);
     void EnqueueMessage(Message message);
 }
-
-public record UnknownMessageNotification(string Message) : INotification;
-public record MessageNotification(Message Message) : INotification;
 
 public class IrcClientOptions
 {
@@ -58,7 +57,10 @@ public class IrcClient : IHostedService, IIrcClient, IDisposable
             .ConfigureAwait(false);
         try
         {
-            if (IsStarted) return;
+            if (IsStarted)
+                throw new InvalidOperationException("Already started");
+
+            IsStarted = true;
 
             await _client.ConnectAsync(_options.Uri, cancellationToken)
                 .ConfigureAwait(false);
@@ -66,7 +68,19 @@ public class IrcClient : IHostedService, IIrcClient, IDisposable
             _cts = new CancellationTokenSource();
             _receiverTask = ReceiverAsync(_cts.Token);
             _senderTask = SenderAsync(_cts.Token);
-            IsStarted = true;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _mediator.Publish(new Connected(), cancellationToken);
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error publishing connected notification");
+                }
+            }, cancellationToken);
         }
         finally
         {
@@ -80,20 +94,25 @@ public class IrcClient : IHostedService, IIrcClient, IDisposable
             .ConfigureAwait(false);
         try
         {
-            if (!IsStarted) return;
-
-            await _client.DisconnectAsync(cancellationToken)
-                .ConfigureAwait(false);
+            if (!IsStarted)
+                throw new InvalidOperationException("Not started");
 
             IsStarted = false;
 
+            try
+            {
+                await _client.DisconnectAsync(cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error disconnecting the client");
+            }
+
             _cts.Cancel();
 
-            try { await _receiverTask; }
-            catch (OperationCanceledException) { }
-
-            try { await _senderTask; }
-            catch (OperationCanceledException) { }
+            await _receiverTask;
+            await _senderTask;
 
             _receiverTask = null;
             _senderTask = null;
@@ -113,31 +132,41 @@ public class IrcClient : IHostedService, IIrcClient, IDisposable
     private async Task ReceiverAsync(CancellationToken cancellationToken)
     {
         await Task.Yield();
+        _logger.LogDebug("Receiver started");
 
         try
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                string? rawMessage = await _client.ReceiveAsync(cancellationToken)
-                    .ConfigureAwait(false);
+                var receiveResult = await _client.ReceiveAsync(cancellationToken);
 
-                if (rawMessage is null)
-                    break; // End of socket
+                if (receiveResult.IsClose)
+                {
+                    _logger.LogInformation("Received close");
+                    break;
+                }
 
-                bool parsed = Message.TryParse(rawMessage, out var message);
+                if (receiveResult.Message is null)
+                {
+                    _logger.LogInformation("Received null");
+                    continue;
+                }
+
+                bool parsed = Message.TryParse(receiveResult.Message, out var message);
+
+                _logger.LogTrace("Received: {Message}, {Parsed}", receiveResult.Message, parsed);
 
                 try
                 {
                     if (parsed)
-                        await _mediator.Publish(new MessageNotification(message), cancellationToken)
-                            .ConfigureAwait(false);
+                        await _mediator.Publish(new MessageReceived(message), cancellationToken);
                     else
-                        await _mediator.Publish(new UnknownMessageNotification(rawMessage), cancellationToken)
-                            .ConfigureAwait(false);
+                        await _mediator.Publish(new UnknownMessageReceived(receiveResult.Message), cancellationToken);
                 }
+                catch (OperationCanceledException) { }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error publishing received message");
+                    _logger.LogError(ex, "Error publishing message received notification");
                 }
             }
         }
@@ -155,15 +184,15 @@ public class IrcClient : IHostedService, IIrcClient, IDisposable
     private async Task SenderAsync(CancellationToken cancellationToken)
     {
         await Task.Yield();
+        _logger.LogDebug("Sender started");
 
         try
         {
-            await foreach (var message in _sendChannel.Reader.ReadAllAsync(cancellationToken)
-                               .ConfigureAwait(false))
+            await foreach (var message in _sendChannel.Reader.ReadAllAsync(cancellationToken))
             {
                 string rawMessage = message.ToString();
-                await _client.SendAsync(rawMessage, cancellationToken)
-                    .ConfigureAwait(false);
+                _logger.LogTrace("Sending: {Message}", rawMessage);
+                await _client.SendAsync(rawMessage, cancellationToken);
             }
         }
         catch (OperationCanceledException) { }

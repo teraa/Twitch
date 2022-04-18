@@ -11,10 +11,10 @@ var readTask = Task.Run(async () =>
 
     while (!cts.IsCancellationRequested)
     {
-        string? message = await client.ReceiveAsync(cts.Token);
-        if (message is null) break;
+        var receiveResult = await client.ReceiveAsync(cts.Token);
+        if (receiveResult.IsClose) break;
 
-        Console.WriteLine("> " + message);
+        Console.WriteLine("> " + receiveResult.Message);
     }
 });
 

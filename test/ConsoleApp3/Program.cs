@@ -4,9 +4,10 @@ using Microsoft.Extensions.Logging;
 using Serilog;
 using Teraa.Irc;
 using Twitch.Irc;
+using Twitch.Irc.Notifications;
 
 Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Debug()
+    .MinimumLevel.Verbose()
     .WriteTo.Console()
     .Enrich.FromLogContext()
     .CreateLogger();
@@ -24,37 +25,70 @@ var services = new ServiceCollection()
 
 var client = services.GetRequiredService<IIrcClient>();
 await client.StartAsync();
-Console.WriteLine("Connected!");
 
 string? line;
 while ((line = Console.ReadLine()) is not null)
 {
-    if (!Message.TryParse(line, out var message))
+    switch (line)
     {
-        Console.WriteLine("Invalid message format.");
-        continue;
+        case "c":
+            if (client.IsStarted) break;
+            await client.StartAsync();
+            break;
+        case "d":
+            if (!client.IsStarted) break;
+            await client.StopAsync();
+            Console.WriteLine("Stopped!");
+            break;
+        default:
+            if (!Message.TryParse(line, out var message))
+            {
+                Console.WriteLine("Invalid message format.");
+                continue;
+            }
+            client.EnqueueMessage(message);
+            break;
     }
-
-    client.EnqueueMessage(message);
 }
 
 await client.StopAsync();
 
-public class Handler : INotificationHandler<MessageNotification>
+public class MessageHandler : INotificationHandler<MessageReceived>
 {
-    private readonly ILogger<Handler> _logger;
+    private readonly IIrcClient _client;
 
-    public Handler(ILogger<Handler> logger)
+    public MessageHandler(IIrcClient client)
     {
+        _client = client;
+    }
+
+    public Task Handle(MessageReceived received, CancellationToken cancellationToken)
+    {
+        if (received.Message is {Command: Command.PONG, Content.Text: "throw"})
+            throw new ArgumentException("pong");
+
+        if (received.Message is {Command: Command.PING})
+            _client.EnqueueMessage(new Message {Command = Command.PONG});
+
+        return Task.CompletedTask;
+    }
+}
+
+public class ConnectedHandler : INotificationHandler<Connected>
+{
+    private readonly IIrcClient _client;
+    private readonly ILogger<ConnectedHandler> _logger;
+
+    public ConnectedHandler(IIrcClient client, ILogger<ConnectedHandler> logger)
+    {
+        _client = client;
         _logger = logger;
     }
 
-    public Task Handle(MessageNotification notification, CancellationToken cancellationToken)
+    public Task Handle(Connected notification, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("{Message}", notification.Message);
-
-        if (notification.Message.Command is Command.PONG)
-            throw new ArgumentException("pong");
+        _logger.LogInformation("Connected!");
+        _client.EnqueueMessage(Message.Parse("nick justinfan1"));
 
         return Task.CompletedTask;
     }

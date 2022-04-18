@@ -23,13 +23,14 @@ public class IrcClientOptions
     public Uri Uri { get; set; } = new Uri("wss://irc-ws.chat.twitch.tv:443");
 }
 
-public class IrcClient : IHostedService, IIrcClient
+public class IrcClient : IHostedService, IIrcClient, IDisposable
 {
     private readonly IClient _client;
     private readonly Channel<Message> _sendChannel;
     private readonly IMediator _mediator;
     private readonly IrcClientOptions _options;
     private readonly ILogger<IrcClient> _logger;
+    private readonly SemaphoreSlim _sem;
     private Task? _receiverTask, _senderTask;
     private CancellationTokenSource? _cts;
 
@@ -40,6 +41,7 @@ public class IrcClient : IHostedService, IIrcClient
         _options = options;
         _logger = logger;
 
+        _sem = new SemaphoreSlim(1, 1);
         _sendChannel = Channel.CreateUnbounded<Message>(new()
         {
             SingleReader = true,
@@ -52,20 +54,33 @@ public class IrcClient : IHostedService, IIrcClient
 
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
-        if (IsStarted) return;
+        await _sem.WaitAsync(cancellationToken)
+            .ConfigureAwait(false);
+        try
+        {
+            if (IsStarted) return;
 
         await _client.ConnectAsync(_options.Uri, cancellationToken)
             .ConfigureAwait(false);
 
-        _cts = new CancellationTokenSource();
-        _receiverTask = ReceiverAsync(_cts.Token);
-        _senderTask = SenderAsync(_cts.Token);
-        IsStarted = true;
+            _cts = new CancellationTokenSource();
+            _receiverTask = ReceiverAsync(_cts.Token);
+            _senderTask = SenderAsync(_cts.Token);
+            IsStarted = true;
+        }
+        finally
+        {
+            _sem.Release();
+        }
     }
 
     public async Task StopAsync(CancellationToken cancellationToken = default)
     {
-        if (!IsStarted) return;
+        await _sem.WaitAsync(cancellationToken)
+            .ConfigureAwait(false);
+        try
+        {
+            if (!IsStarted) return;
 
         await _client.DisconnectAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -74,13 +89,19 @@ public class IrcClient : IHostedService, IIrcClient
 
         _cts.Cancel();
 
-        try { await _receiverTask; }
-        catch (OperationCanceledException) { }
-        try { await _senderTask; }
-        catch (OperationCanceledException) { }
+            try { await _receiverTask; }
+            catch (OperationCanceledException) { }
 
-        _receiverTask = null;
-        _senderTask = null;
+            try { await _senderTask; }
+            catch (OperationCanceledException) { }
+
+            _receiverTask = null;
+            _senderTask = null;
+        }
+        finally
+        {
+            _sem.Release();
+        }
     }
 
     public void EnqueueMessage(Message message)
@@ -147,5 +168,11 @@ public class IrcClient : IHostedService, IIrcClient
         }
 
         _logger.LogDebug("Sender completed");
+    }
+
+    public void Dispose()
+    {
+        _sem.Dispose();
+        _cts?.Dispose();
     }
 }

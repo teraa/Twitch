@@ -26,7 +26,6 @@ public class IrcClientOptions
 public class IrcClient : IHostedService, IIrcClient
 {
     private readonly IClient _client;
-    private readonly Channel<Message> _receiveChannel;
     private readonly Channel<Message> _sendChannel;
     private readonly IMediator _mediator;
     private readonly IrcClientOptions _options;
@@ -40,12 +39,6 @@ public class IrcClient : IHostedService, IIrcClient
         _mediator = mediator;
         _options = options;
         _logger = logger;
-
-        _receiveChannel = Channel.CreateUnbounded<Message>(new()
-        {
-            SingleReader = true,
-            SingleWriter = true,
-        });
 
         _sendChannel = Channel.CreateUnbounded<Message>(new()
         {

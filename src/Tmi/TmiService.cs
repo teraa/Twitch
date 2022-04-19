@@ -19,7 +19,7 @@ public class TmiService : IHostedService, IDisposable
 {
     private readonly IClient _client;
     private readonly Channel<Message> _sendChannel;
-    private readonly IMediator _mediator;
+    private readonly IPublisher _publisher;
     private readonly TmiServiceOptions _options;
     private readonly ILogger<TmiService> _logger;
     private readonly SemaphoreSlim _sem;
@@ -27,10 +27,10 @@ public class TmiService : IHostedService, IDisposable
     private CancellationTokenSource? _cts;
     private bool _isReconnecting;
 
-    public TmiService(IClient client, IMediator mediator, IOptions<TmiServiceOptions> options, ILogger<TmiService> logger)
+    public TmiService(IClient client, IPublisher publisher, IOptions<TmiServiceOptions> options, ILogger<TmiService> logger)
     {
         _client = client;
-        _mediator = mediator;
+        _publisher = publisher;
         _options = options.Value;
         _logger = logger;
 
@@ -108,7 +108,7 @@ public class TmiService : IHostedService, IDisposable
         {
             try
             {
-                await _mediator.Publish(new Connected(), cancellationToken);
+                await _publisher.Publish(new Connected(), cancellationToken);
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)
@@ -270,9 +270,9 @@ public class TmiService : IHostedService, IDisposable
                 try
                 {
                     if (parsed)
-                        await _mediator.Publish(new MessageReceived(message), cancellationToken);
+                        await _publisher.Publish(new MessageReceived(message), cancellationToken);
                     else
-                        await _mediator.Publish(new UnknownMessageReceived(receiveResult.Message), cancellationToken);
+                        await _publisher.Publish(new UnknownMessageReceived(receiveResult.Message), cancellationToken);
                 }
                 catch (OperationCanceledException) { }
                 catch (Exception ex)

@@ -173,7 +173,8 @@ public class TmiService : IHostedService, IDisposable
         catch (Exception ex)
         {
             _isReconnecting = false;
-            _logger.LogError(ex, "Error reconnecting");
+            if (ex is not OperationCanceledException)
+                _logger.LogError(ex, "Error reconnecting");
         }
     }
 

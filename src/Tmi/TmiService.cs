@@ -25,6 +25,7 @@ public class TmiService : IHostedService, IDisposable
     private readonly SemaphoreSlim _sem;
     private Task? _receiverTask, _senderTask;
     private CancellationTokenSource? _cts;
+    private bool _isReconnecting;
 
     public TmiService(IClient client, IMediator mediator, IOptions<TmiServiceOptions> options, ILogger<TmiService> logger)
     {
@@ -43,7 +44,6 @@ public class TmiService : IHostedService, IDisposable
 
     [MemberNotNullWhen(true, nameof(_cts))]
     public bool IsStarted { get; private set; }
-    public bool IsReconnecting { get; private set; }
 
     public void EnqueueMessage(Message message)
     {
@@ -154,7 +154,7 @@ public class TmiService : IHostedService, IDisposable
         }
         catch (Exception ex)
         {
-            IsReconnecting = false;
+            _isReconnecting = false;
             _logger.LogError(ex, "Error reconnecting");
         }
     }
@@ -166,13 +166,13 @@ public class TmiService : IHostedService, IDisposable
         await _sem.WaitAsync(cancellationToken);
         try
         {
-            if (IsReconnecting)
+            if (_isReconnecting)
             {
                 _logger.LogDebug("Concurrent reconnect request");
                 return;
             }
 
-            IsReconnecting = true;
+            _isReconnecting = true;
             _cts.Cancel();
             _cts = new CancellationTokenSource();
             cancellationToken = _cts.Token;
@@ -223,14 +223,14 @@ public class TmiService : IHostedService, IDisposable
         if (cancellationToken.IsCancellationRequested)
         {
             _logger.LogDebug("Reconnect aborted");
-            IsReconnecting = false;
+            _isReconnecting = false;
             return;
         }
 
         await _sem.WaitAsync(cancellationToken);
         try
         {
-            IsReconnecting = false;
+            _isReconnecting = false;
         }
         finally
         {

@@ -5,10 +5,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Teraa.Irc;
-using Twitch.Tmi.Notifications;
+using Teraa.Twitch.Tmi.Notifications;
 
-// TODO: Teraa.Twitch.Tmi
-namespace Twitch.Tmi;
+namespace Teraa.Twitch.Tmi;
 
 public class TmiServiceOptions
 {

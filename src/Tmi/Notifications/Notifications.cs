@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using Teraa.Irc;
 
-namespace Twitch.Tmi.Notifications;
+namespace Teraa.Twitch.Tmi.Notifications;
 
 public record MessageReceived(Message Message) : INotification;
 public record UnknownMessageReceived(string Message) : INotification;

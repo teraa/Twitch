@@ -3,8 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Teraa.Irc;
-using Twitch.Tmi;
-using Twitch.Tmi.Notifications;
+using Teraa.Twitch.Tmi;
+using Teraa.Twitch.Tmi.Notifications;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Verbose()

@@ -5,7 +5,7 @@ using System.IO.Pipelines;
 using System.Net.WebSockets;
 using System.Text;
 
-namespace Twitch.Tmi;
+namespace Teraa.Twitch.Tmi;
 
 public interface IClient
 {

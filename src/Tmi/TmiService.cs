@@ -103,6 +103,8 @@ public class TmiService : IHostedService, IDisposable
         await _client.ConnectAsync(_options.Uri, cancellationToken)
             .ConfigureAwait(false);
 
+        _logger.LogDebug("Connected");
+
         _receiverTask = ReceiverAsync(_cts.Token);
         _senderTask = SenderAsync(_cts.Token);
 
@@ -130,6 +132,8 @@ public class TmiService : IHostedService, IDisposable
         {
             await _client.DisconnectAsync(cancellationToken)
                 .ConfigureAwait(false);
+
+            _logger.LogDebug("Disconnected");
         }
         catch (Exception ex)
         {
@@ -268,7 +272,8 @@ public class TmiService : IHostedService, IDisposable
 
                 bool parsed = Message.TryParse(receiveResult.Message, out var message);
 
-                _logger.LogTrace("Received: {Message}, {Parsed}", receiveResult.Message, parsed);
+                _logger.LogTrace("Received: {Parsed}, {Message}",
+                    parsed, receiveResult.Message);
 
                 INotification notification = parsed
                     ? new MessageReceived(message)

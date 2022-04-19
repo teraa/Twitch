@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
 using MediatR;
 using Microsoft.Extensions.Hosting;
@@ -40,7 +41,7 @@ public class TmiService : IHostedService, IDisposable
         });
     }
 
-    // [MemberNotNullWhen(true, nameof(_cts), nameof(_receiverTask), nameof(_senderTask))]
+    [MemberNotNullWhen(true, nameof(_cts))]
     public bool IsStarted { get; private set; }
     public bool IsReconnecting { get; private set; }
 
@@ -80,26 +81,26 @@ public class TmiService : IHostedService, IDisposable
             if (!IsStarted)
                 throw new InvalidOperationException("Not started");
 
-            IsStarted = false;
-
             _cts.Cancel();
             await StopInternalAsync(cancellationToken)
                 .ConfigureAwait(false);
         }
         finally
         {
+            IsStarted = false;
             _sem.Release();
         }
     }
 
     private async Task StartInternalAsync(CancellationToken cancellationToken)
     {
+        Debug.Assert(IsStarted);
+
         if (_client.IsConnected) return;
 
         await _client.ConnectAsync(_options.Uri, cancellationToken)
             .ConfigureAwait(false);
 
-        // _cts = new CancellationTokenSource();
         _receiverTask = ReceiverAsync(_cts.Token);
         _senderTask = SenderAsync(_cts.Token);
 
@@ -119,6 +120,8 @@ public class TmiService : IHostedService, IDisposable
 
     private async Task StopInternalAsync(CancellationToken cancellationToken)
     {
+        Debug.Assert(IsStarted);
+
         if (!_client.IsConnected) return;
 
         try
@@ -131,13 +134,11 @@ public class TmiService : IHostedService, IDisposable
             _logger.LogError(ex, "Error disconnecting the client");
         }
 
-        // _stopCts.Cancel();
+        if (_receiverTask is { } receiverTask)
+            await receiverTask;
 
-        await _receiverTask;
-        await _senderTask;
-
-        _receiverTask = null;
-        _senderTask = null;
+        if (_senderTask is { } senderTask)
+            await senderTask;
     }
 
     private async Task ReconnectAsync(CancellationToken cancellationToken)
@@ -160,6 +161,8 @@ public class TmiService : IHostedService, IDisposable
 
     private async Task ReconnectInternalAsync(CancellationToken cancellationToken)
     {
+        Debug.Assert(IsStarted);
+
         await _sem.WaitAsync(cancellationToken);
         try
         {

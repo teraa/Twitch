@@ -11,7 +11,7 @@ public class TmiServiceOptions
     public Uri Uri { get; set; } = new Uri("wss://irc-ws.chat.twitch.tv:443");
 }
 
-public class TmiService : WsService<Message>
+public class TmiService : WsService
 {
     private readonly IPublisher _publisher;
     private readonly ILogger<TmiService> _logger;
@@ -26,6 +26,9 @@ public class TmiService : WsService<Message>
         _publisher = publisher;
         _logger = logger;
     }
+
+    public void EnqueueMessage(Message message)
+        => EnqueueMessage(message.ToString());
 
     protected override async ValueTask HandleConnectAsync(CancellationToken cancellationToken)
     {
@@ -66,10 +69,5 @@ public class TmiService : WsService<Message>
         {
             _logger.LogError(ex, "Error publishing {Notification}", notification.GetType().Name);
         }
-    }
-
-    protected override string Transform(Message message)
-    {
-        return message.ToString();
     }
 }

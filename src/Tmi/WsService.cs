@@ -7,13 +7,12 @@ using Microsoft.Extensions.Options;
 
 namespace Teraa.Twitch.Tmi;
 
-public abstract class WsService<TMessage> : IHostedService, IDisposable
-    where TMessage : notnull
+public abstract class WsService : IHostedService, IDisposable
 {
     private readonly IWsClient _client;
-    private readonly Channel<TMessage> _sendChannel;
+    private readonly Channel<string> _sendChannel;
     private readonly TmiServiceOptions _options;
-    private readonly ILogger<WsService<TMessage>> _logger;
+    private readonly ILogger<WsService> _logger;
     private readonly SemaphoreSlim _sem;
     private Task? _receiverTask, _senderTask;
     private CancellationTokenSource? _cts;
@@ -21,14 +20,14 @@ public abstract class WsService<TMessage> : IHostedService, IDisposable
     private DateTimeOffset _connectedAt;
     private int _fastDisconnects;
 
-    protected WsService(IWsClient client, IOptions<TmiServiceOptions> options, ILogger<WsService<TMessage>> logger)
+    protected WsService(IWsClient client, IOptions<TmiServiceOptions> options, ILogger<WsService> logger)
     {
         _client = client;
         _options = options.Value;
         _logger = logger;
 
         _sem = new SemaphoreSlim(1, 1);
-        _sendChannel = Channel.CreateUnbounded<TMessage>(new()
+        _sendChannel = Channel.CreateUnbounded<string>(new()
         {
             SingleReader = true,
             SingleWriter = true,
@@ -44,7 +43,7 @@ public abstract class WsService<TMessage> : IHostedService, IDisposable
         return 1 << (iteration > max ? max : iteration);
     }
 
-    public void EnqueueMessage(TMessage message)
+    public void EnqueueMessage(string message)
     {
         bool success = _sendChannel.Writer.TryWrite(message);
         Debug.Assert(success);
@@ -101,7 +100,6 @@ public abstract class WsService<TMessage> : IHostedService, IDisposable
 
     protected abstract ValueTask HandleConnectAsync(CancellationToken cancellationToken);
     protected abstract ValueTask HandleReceivedAsync(ReceiveResult receiveResult, CancellationToken cancellationToken);
-    protected abstract string Transform(TMessage message);
 
     private async Task StartInternalAsync(CancellationToken cancellationToken)
     {
@@ -305,9 +303,8 @@ public abstract class WsService<TMessage> : IHostedService, IDisposable
         {
             await foreach (var message in _sendChannel.Reader.ReadAllAsync(cancellationToken))
             {
-                string rawMessage = Transform(message);
-                _logger.LogTrace("Sending: {Message}", rawMessage);
-                await _client.SendAsync(rawMessage, cancellationToken);
+                _logger.LogTrace("Sending: {Message}", message);
+                await _client.SendAsync(message, cancellationToken);
             }
         }
         catch (OperationCanceledException) { }

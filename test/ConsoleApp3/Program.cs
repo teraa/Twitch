@@ -21,7 +21,7 @@ var services = new ServiceCollection()
     .AddTmiService()
     .Configure<TmiServiceOptions>(options =>
     {
-        options.Uri = new Uri("ws://localhost:5033/ws");
+        // options.Uri = new Uri("ws://localhost:5033/ws");
     })
     .AddPubSubService()
     .Configure<PubSubServiceOptions>(options =>
@@ -30,7 +30,8 @@ var services = new ServiceCollection()
     })
     .BuildServiceProvider();
 
-var client = services.GetRequiredService<PubSubService>();
+// var client = services.GetRequiredService<PubSubService>();
+var client = services.GetRequiredService<TmiService>();
 await client.StartAsync();
 
 string? line;
@@ -47,13 +48,13 @@ while ((line = Console.ReadLine()) is not null)
             await client.StopAsync();
             break;
         default:
-            // if (!Message.TryParse(line, out var message))
-            // {
-            //     Console.WriteLine("Invalid message format.");
-            //     continue;
-            // }
-            // client.EnqueueMessage(message);
-            client.EnqueueMessage(line);
+            if (!Message.TryParse(line, out var message))
+            {
+                Console.WriteLine("Invalid message format.");
+                continue;
+            }
+            client.EnqueueMessage(message);
+            // client.EnqueueMessage(line);
             break;
     }
 }
@@ -63,13 +64,6 @@ if (client.IsStarted)
 
 public class MessageHandler : INotificationHandler<MessageReceived>
 {
-    private readonly TmiService _tmi;
-
-    public MessageHandler(TmiService tmi)
-    {
-        _tmi = tmi;
-    }
-
     public Task Handle(MessageReceived received, CancellationToken cancellationToken)
     {
         if (received.Message is {Command: Command.PONG, Content.Text: "throw"})
@@ -91,7 +85,6 @@ public class ConnectedHandler : INotificationHandler<Connected>
     public Task Handle(Connected notification, CancellationToken cancellationToken)
     {
         _tmi.EnqueueMessage(Message.Parse("nick justinfan1"));
-        // _tmi.EnqueueMessage(Message.Parse("nick"));
 
         return Task.CompletedTask;
     }

@@ -10,21 +10,12 @@ using Twitch.Tmi.Notifications;
 // TODO: Teraa.Twitch.Tmi
 namespace Twitch.Tmi;
 
-// TODO: Remove
-public interface ITmiService
-{
-    bool IsStarted { get; }
-    Task StartAsync(CancellationToken cancellationToken = default);
-    Task StopAsync(CancellationToken cancellationToken = default);
-    void EnqueueMessage(Message message);
-}
-
 public class TmiServiceOptions
 {
     public Uri Uri { get; set; } = new Uri("wss://irc-ws.chat.twitch.tv:443");
 }
 
-public class TmiService : IHostedService, ITmiService, IDisposable
+public class TmiService : IHostedService, IDisposable
 {
     private readonly IClient _client;
     private readonly Channel<Message> _sendChannel;

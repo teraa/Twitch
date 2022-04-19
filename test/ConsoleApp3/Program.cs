@@ -20,10 +20,10 @@ var services = new ServiceCollection()
     .AddMediatR(typeof(Program))
     .AddSingleton<IClient>(new WsClient())
     .AddSingleton<TmiServiceOptions>()
-    .AddSingleton<ITmiService, TmiService>()
+    .AddSingleton<TmiService>()
     .BuildServiceProvider();
 
-var client = services.GetRequiredService<ITmiService>();
+var client = services.GetRequiredService<TmiService>();
 await client.StartAsync();
 
 string? line;
@@ -55,9 +55,9 @@ await client.StopAsync();
 
 public class MessageHandler : INotificationHandler<MessageReceived>
 {
-    private readonly ITmiService _tmi;
+    private readonly TmiService _tmi;
 
-    public MessageHandler(ITmiService tmi)
+    public MessageHandler(TmiService tmi)
     {
         _tmi = tmi;
     }
@@ -76,10 +76,10 @@ public class MessageHandler : INotificationHandler<MessageReceived>
 
 public class ConnectedHandler : INotificationHandler<Connected>
 {
-    private readonly ITmiService _tmi;
+    private readonly TmiService _tmi;
     private readonly ILogger<ConnectedHandler> _logger;
 
-    public ConnectedHandler(ITmiService tmi, ILogger<ConnectedHandler> logger)
+    public ConnectedHandler(TmiService tmi, ILogger<ConnectedHandler> logger)
     {
         _tmi = tmi;
         _logger = logger;

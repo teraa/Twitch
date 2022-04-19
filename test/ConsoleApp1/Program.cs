@@ -1,4 +1,4 @@
-﻿using Teraa.Twitch.Tmi;
+﻿using Teraa.Twitch.Ws;
 
 var client = new WsClient();
 await client.ConnectAsync(new Uri("ws://localhost:5033/ws"));

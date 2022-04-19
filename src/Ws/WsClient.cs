@@ -5,7 +5,7 @@ using System.Net.WebSockets;
 using System.Text;
 using JetBrains.Annotations;
 
-namespace Teraa.Twitch.Tmi;
+namespace Teraa.Twitch.Ws;
 
 public interface IWsClient
 {

@@ -1,6 +1,6 @@
 ﻿using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
-using Teraa.Twitch.PubSub;
+using Teraa.Twitch.Ws;
 
 namespace Teraa.Twitch.Tmi;
 
@@ -13,15 +13,6 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<TmiServiceOptions>();
         services.AddSingleton<TmiService>();
         services.AddHostedService(sp => sp.GetRequiredService<TmiService>());
-        return services;
-    }
-
-    public static IServiceCollection AddPubSubService(this IServiceCollection services)
-    {
-        services.AddTransient<IWsClient, WsClient>();
-        services.AddSingleton<PubSubServiceOptions>();
-        services.AddSingleton<PubSubService>();
-        services.AddHostedService(sp => sp.GetRequiredService<PubSubService>());
         return services;
     }
 }

@@ -4,8 +4,7 @@ using Serilog;
 using Teraa.Irc;
 using Teraa.Twitch.PubSub;
 using Teraa.Twitch.Tmi;
-using Connected = Teraa.Twitch.Tmi.Notifications.Connected;
-using MessageReceived = Teraa.Twitch.Tmi.Notifications.MessageReceived;
+using Teraa.Twitch.Tmi.Notifications;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Verbose()
@@ -19,12 +18,16 @@ var services = new ServiceCollection()
         configure.AddSerilog();
     })
     .AddMediatR(typeof(Program))
-    // .AddTmiService()
-    // .Configure<TmiServiceOptions>(options =>
-    // {
-    //     options.Uri = new Uri("ws://localhost:5033/ws");
-    // })
+    .AddTmiService()
+    .Configure<TmiServiceOptions>(options =>
+    {
+        options.Uri = new Uri("ws://localhost:5033/ws");
+    })
     .AddPubSubService()
+    .Configure<PubSubServiceOptions>(options =>
+    {
+        // options.Uri = new Uri("ws://localhost:5033/ws");
+    })
     .BuildServiceProvider();
 
 var client = services.GetRequiredService<PubSubService>();

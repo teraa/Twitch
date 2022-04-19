@@ -6,7 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Teraa.Twitch.Tmi;
+namespace Teraa.Twitch.Ws;
 
 public interface IWsServiceOptions
 {

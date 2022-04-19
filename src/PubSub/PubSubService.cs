@@ -3,7 +3,8 @@ using JetBrains.Annotations;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Teraa.Twitch.Tmi;
+using Teraa.Twitch.PubSub.Notifications;
+using Teraa.Twitch.Ws;
 
 namespace Teraa.Twitch.PubSub;
 
@@ -11,10 +12,6 @@ public class PubSubServiceOptions : IWsServiceOptions
 {
     public Uri Uri { get; set; } = new Uri("wss://pubsub-edge.twitch.tv");
 }
-
-public record Connected : INotification;
-
-public record MessageReceived(string Message) : INotification;
 
 [PublicAPI]
 public class PubSubService : WsService

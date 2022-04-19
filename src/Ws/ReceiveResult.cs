@@ -1,4 +1,4 @@
-﻿namespace Teraa.Twitch.Tmi;
+﻿namespace Teraa.Twitch.Ws;
 
 public readonly struct ReceiveResult
 {

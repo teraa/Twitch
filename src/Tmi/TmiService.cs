@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Teraa.Irc;
 using Teraa.Twitch.Tmi.Notifications;
+using Teraa.Twitch.Ws;
 
 namespace Teraa.Twitch.Tmi;
 

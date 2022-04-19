@@ -305,24 +305,7 @@ public class TmiService : IHostedService, IDisposable
                     continue;
                 }
 
-                bool parsed = Message.TryParse(receiveResult.Message, out var message);
-
-                _logger.LogTrace("Received: {Parsed}, {Message}",
-                    parsed, receiveResult.Message);
-
-                INotification notification = parsed
-                    ? new MessageReceived(message)
-                    : new UnknownMessageReceived(receiveResult.Message);
-
-                try
-                {
-                    await _publisher.Publish(notification, cancellationToken);
-                }
-                catch (OperationCanceledException) { }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error publishing {Notification}", notification.GetType().Name);
-                }
+                await HandleReceivedAsync(receiveResult, cancellationToken);
             }
         }
         catch (OperationCanceledException) { }
@@ -334,6 +317,28 @@ public class TmiService : IHostedService, IDisposable
         _logger.LogDebug("Receiver completed");
 
         _ = ReconnectAsync(cancellationToken);
+    }
+
+    private async Task HandleReceivedAsync(ReceiveResult receiveResult, CancellationToken cancellationToken)
+    {
+        bool parsed = Message.TryParse(receiveResult.Message, out var message);
+
+        _logger.LogTrace("Received: {Parsed}, {Message}",
+            parsed, receiveResult.Message);
+
+        INotification notification = parsed
+            ? new MessageReceived(message)
+            : new UnknownMessageReceived(receiveResult.Message);
+
+        try
+        {
+            await _publisher.Publish(notification, cancellationToken);
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error publishing {Notification}", notification.GetType().Name);
+        }
     }
 
     private async Task SenderAsync(CancellationToken cancellationToken)

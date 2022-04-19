@@ -26,6 +26,8 @@ public class TmiService : IHostedService, IDisposable
     private Task? _receiverTask, _senderTask;
     private CancellationTokenSource? _cts;
     private bool _isReconnecting;
+    private DateTimeOffset _connectedAt;
+    private int _fastDisconnects;
 
     public TmiService(IClient client, IPublisher publisher, IOptions<TmiServiceOptions> options, ILogger<TmiService> logger)
     {
@@ -44,6 +46,12 @@ public class TmiService : IHostedService, IDisposable
 
     [MemberNotNullWhen(true, nameof(_cts))]
     public bool IsStarted { get; private set; }
+
+    private static int GetDelaySeconds(int iteration)
+    {
+        const int max = 7;
+        return 1 << (iteration > max ? max : iteration);
+    }
 
     public void EnqueueMessage(Message message)
     {
@@ -109,6 +117,7 @@ public class TmiService : IHostedService, IDisposable
         await _client.ConnectAsync(_options.Uri, cancellationToken)
             .ConfigureAwait(false);
 
+        _connectedAt = DateTimeOffset.UtcNow;
         _logger.LogDebug("Connected");
 
         _receiverTask = ReceiverAsync(_cts.Token);
@@ -202,6 +211,20 @@ public class TmiService : IHostedService, IDisposable
             _sem.Release();
         }
 
+        var fastDelay = TimeSpan.FromSeconds(GetDelaySeconds(_fastDisconnects));
+        var fastDelayRemaining = fastDelay - (DateTimeOffset.UtcNow - _connectedAt);
+        if (fastDelayRemaining > TimeSpan.Zero)
+        {
+            _logger.LogDebug("Fast disconnect #{Count} delay {Delay} ({RemainingDelay})",
+                _fastDisconnects, fastDelay, fastDelayRemaining);
+            _fastDisconnects++;
+            await Task.Delay(fastDelayRemaining, cancellationToken);
+        }
+        else
+        {
+            _fastDisconnects = 0;
+        }
+
         int attempt = 0;
 
         while (!cancellationToken.IsCancellationRequested)
@@ -226,8 +249,7 @@ public class TmiService : IHostedService, IDisposable
 
             attempt++;
 
-            const int max = 7;
-            int delaySeconds = 1 << (attempt > max ? max : attempt);
+            var delaySeconds = GetDelaySeconds(attempt);
             _logger.LogDebug("Delaying reconnect #{Attempt} for {DelaySeconds}s", attempt, delaySeconds);
 
             try

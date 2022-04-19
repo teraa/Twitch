@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
 using MediatR;
 using Microsoft.Extensions.Hosting;
@@ -8,8 +7,10 @@ using Microsoft.Extensions.Options;
 using Teraa.Irc;
 using Twitch.Tmi.Notifications;
 
+// TODO: Teraa.Twitch.Tmi
 namespace Twitch.Tmi;
 
+// TODO: Remove
 public interface ITmiService
 {
     bool IsStarted { get; }
@@ -49,8 +50,15 @@ public class TmiService : IHostedService, ITmiService, IDisposable
         });
     }
 
-    [MemberNotNullWhen(true, nameof(_cts), nameof(_receiverTask), nameof(_senderTask))]
+    // [MemberNotNullWhen(true, nameof(_cts), nameof(_receiverTask), nameof(_senderTask))]
     public bool IsStarted { get; private set; }
+    public bool IsReconnecting { get; private set; }
+
+    public void EnqueueMessage(Message message)
+    {
+        bool success = _sendChannel.Writer.TryWrite(message);
+        Debug.Assert(success);
+    }
 
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
@@ -63,25 +71,9 @@ public class TmiService : IHostedService, ITmiService, IDisposable
 
             IsStarted = true;
 
-            await _client.ConnectAsync(_options.Uri, cancellationToken)
-                .ConfigureAwait(false);
-
             _cts = new CancellationTokenSource();
-            _receiverTask = ReceiverAsync(_cts.Token);
-            _senderTask = SenderAsync(_cts.Token);
-
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await _mediator.Publish(new Connected(), cancellationToken);
-                }
-                catch (OperationCanceledException) { }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error publishing connected notification");
-                }
-            }, cancellationToken);
+            await StartInternalAsync(cancellationToken)
+                .ConfigureAwait(false);
         }
         finally
         {
@@ -100,23 +92,9 @@ public class TmiService : IHostedService, ITmiService, IDisposable
 
             IsStarted = false;
 
-            try
-            {
-                await _client.DisconnectAsync(cancellationToken)
-                    .ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error disconnecting the client");
-            }
-
             _cts.Cancel();
-
-            await _receiverTask;
-            await _senderTask;
-
-            _receiverTask = null;
-            _senderTask = null;
+            await StopInternalAsync(cancellationToken)
+                .ConfigureAwait(false);
         }
         finally
         {
@@ -124,10 +102,147 @@ public class TmiService : IHostedService, ITmiService, IDisposable
         }
     }
 
-    public void EnqueueMessage(Message message)
+    private async Task StartInternalAsync(CancellationToken cancellationToken)
     {
-        bool success = _sendChannel.Writer.TryWrite(message);
-        Debug.Assert(success);
+        if (_client.IsConnected) return;
+
+        await _client.ConnectAsync(_options.Uri, cancellationToken)
+            .ConfigureAwait(false);
+
+        // _cts = new CancellationTokenSource();
+        _receiverTask = ReceiverAsync(_cts.Token);
+        _senderTask = SenderAsync(_cts.Token);
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _mediator.Publish(new Connected(), cancellationToken);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error publishing {Notification}", nameof(Connected));
+            }
+        }, cancellationToken);
+    }
+
+    private async Task StopInternalAsync(CancellationToken cancellationToken)
+    {
+        if (!_client.IsConnected) return;
+
+        try
+        {
+            await _client.DisconnectAsync(cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error disconnecting the client");
+        }
+
+        // _stopCts.Cancel();
+
+        await _receiverTask;
+        await _senderTask;
+
+        _receiverTask = null;
+        _senderTask = null;
+    }
+
+    private async Task ReconnectAsync(CancellationToken cancellationToken)
+    {
+        if (cancellationToken.IsCancellationRequested)
+            return;
+
+        try
+        {
+            await ReconnectInternalAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            IsReconnecting = false;
+            _logger.LogError(ex, "Error reconnecting");
+        }
+    }
+
+    private async Task ReconnectInternalAsync(CancellationToken cancellationToken)
+    {
+        await _sem.WaitAsync(cancellationToken);
+        try
+        {
+            if (IsReconnecting)
+            {
+                _logger.LogDebug("Concurrent reconnect request");
+                return;
+            }
+
+            IsReconnecting = true;
+            _cts.Cancel();
+            _cts = new CancellationTokenSource();
+            cancellationToken = _cts.Token;
+        }
+        finally
+        {
+            _sem.Release();
+        }
+
+        int attempt = 0;
+
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogDebug("Reconnect #{Attempt} start", attempt);
+
+            await StopInternalAsync(cancellationToken);
+
+            try
+            {
+                await StartInternalAsync(cancellationToken);
+                break;
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error restarting");
+            }
+
+            attempt++;
+
+            const int max = 7;
+            int delaySeconds = 1 << (attempt > max ? max : attempt);
+            _logger.LogDebug("Delaying reconnect #{Attempt} for {DelaySeconds}s", attempt, delaySeconds);
+
+            try
+            {
+                await Task.Delay(delaySeconds * 1000, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+        }
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogDebug("Reconnect aborted");
+            IsReconnecting = false;
+            return;
+        }
+
+        await _sem.WaitAsync(cancellationToken);
+        try
+        {
+            IsReconnecting = false;
+        }
+        finally
+        {
+            _sem.Release();
+        }
+
+        _logger.LogDebug("Reconnect completed");
     }
 
     private async Task ReceiverAsync(CancellationToken cancellationToken)
@@ -167,7 +282,7 @@ public class TmiService : IHostedService, ITmiService, IDisposable
                 catch (OperationCanceledException) { }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error publishing message received notification");
+                    _logger.LogError(ex, "Error publishing {Notification}", nameof(MessageReceived));
                 }
             }
         }
@@ -179,7 +294,7 @@ public class TmiService : IHostedService, ITmiService, IDisposable
 
         _logger.LogDebug("Receiver completed");
 
-        // if (!cancellationToken.IsCancellationRequested) { /* reconnect */ }
+        _ = ReconnectAsync(cancellationToken);
     }
 
     private async Task SenderAsync(CancellationToken cancellationToken)
@@ -204,7 +319,7 @@ public class TmiService : IHostedService, ITmiService, IDisposable
 
         _logger.LogDebug("Sender completed");
 
-        // if (!cancellationToken.IsCancellationRequested) { /* reconnect */ }
+        _ = ReconnectAsync(cancellationToken);
     }
 
     public void Dispose()

@@ -6,7 +6,7 @@ using Teraa.Twitch.Tmi.Notifications;
 
 namespace Teraa.Twitch.Tmi;
 
-public class TmiServiceOptions
+public class TmiServiceOptions : IWsServiceOptions
 {
     public Uri Uri { get; set; } = new Uri("wss://irc-ws.chat.twitch.tv:443");
 }

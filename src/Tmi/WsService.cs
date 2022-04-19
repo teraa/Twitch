@@ -7,11 +7,16 @@ using Microsoft.Extensions.Options;
 
 namespace Teraa.Twitch.Tmi;
 
+public interface IWsServiceOptions
+{
+    Uri Uri { get; }
+}
+
 public abstract class WsService : IHostedService, IDisposable
 {
     private readonly IWsClient _client;
     private readonly Channel<string> _sendChannel;
-    private readonly TmiServiceOptions _options;
+    private readonly IWsServiceOptions _options;
     private readonly ILogger<WsService> _logger;
     private readonly SemaphoreSlim _sem;
     private Task? _receiverTask, _senderTask;
@@ -20,7 +25,7 @@ public abstract class WsService : IHostedService, IDisposable
     private DateTimeOffset _connectedAt;
     private int _fastDisconnects;
 
-    protected WsService(IWsClient client, IOptions<TmiServiceOptions> options, ILogger<WsService> logger)
+    protected WsService(IWsClient client, IOptions<IWsServiceOptions> options, ILogger<WsService> logger)
     {
         _client = client;
         _options = options.Value;

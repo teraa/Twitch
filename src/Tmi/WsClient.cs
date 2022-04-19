@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO.Pipelines;
 using System.Net.WebSockets;
 using System.Text;
+using JetBrains.Annotations;
 
 namespace Teraa.Twitch.Tmi;
 
@@ -28,6 +29,7 @@ public readonly struct ReceiveResult
     public string? Message { get; }
 }
 
+[PublicAPI]
 public class WsClient : IWsClient, IDisposable
 {
     private ClientWebSocket? _client;

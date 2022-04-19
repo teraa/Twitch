@@ -156,7 +156,7 @@ public abstract class WsService : IHostedService, IDisposable
         _logger.LogDebug("Disconnected");
     }
 
-    private async Task ReconnectAsync(CancellationToken cancellationToken)
+    protected async Task ReconnectAsync(CancellationToken cancellationToken)
     {
         await Task.Yield();
 

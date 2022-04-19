@@ -58,6 +58,23 @@ public class TmiService : WsService
         _logger.LogTrace("Received: {Parsed}, {Message}",
             parsed, receiveResult.Message);
 
+        if (parsed)
+        {
+            switch (message)
+            {
+                case {Command: Command.RECONNECT}:
+                    _ = ReconnectAsync(cancellationToken);
+                    break;
+
+                case {Command: Command.PING}:
+                    EnqueueMessage(new Message
+                    {
+                        Command = Command.PONG,
+                    });
+                    break;
+            }
+        }
+
         INotification notification = parsed
             ? new MessageReceived(message)
             : new UnknownMessageReceived(receiveResult.Message);

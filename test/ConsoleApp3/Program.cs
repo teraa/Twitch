@@ -68,9 +68,6 @@ public class MessageHandler : INotificationHandler<MessageReceived>
         if (received.Message is {Command: Command.PONG, Content.Text: "throw"})
             throw new ArgumentException("pong");
 
-        if (received.Message is {Command: Command.PING})
-            _tmi.EnqueueMessage(new Message {Command = Command.PONG});
-
         return Task.CompletedTask;
     }
 }

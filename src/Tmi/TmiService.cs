@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using JetBrains.Annotations;
+using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Teraa.Irc;
@@ -11,6 +12,7 @@ public class TmiServiceOptions : IWsServiceOptions
     public Uri Uri { get; set; } = new Uri("wss://irc-ws.chat.twitch.tv:443");
 }
 
+[PublicAPI]
 public class TmiService : WsService
 {
     private readonly IPublisher _publisher;

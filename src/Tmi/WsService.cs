@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
+using JetBrains.Annotations;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -12,6 +13,7 @@ public interface IWsServiceOptions
     Uri Uri { get; }
 }
 
+[PublicAPI]
 public abstract class WsService : IHostedService, IDisposable
 {
     private readonly IWsClient _client;

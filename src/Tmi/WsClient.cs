@@ -17,18 +17,6 @@ public interface IWsClient
     Task SendAsync(string message, CancellationToken cancellationToken = default);
 }
 
-public readonly struct ReceiveResult
-{
-    public ReceiveResult(bool isClose, string? message)
-    {
-        IsClose = isClose;
-        Message = message;
-    }
-
-    public bool IsClose { get; }
-    public string? Message { get; }
-}
-
 [PublicAPI]
 public class WsClient : IWsClient, IDisposable
 {

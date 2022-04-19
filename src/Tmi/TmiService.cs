@@ -270,17 +270,18 @@ public class TmiService : IHostedService, IDisposable
 
                 _logger.LogTrace("Received: {Message}, {Parsed}", receiveResult.Message, parsed);
 
+                INotification notification = parsed
+                    ? new MessageReceived(message)
+                    : new UnknownMessageReceived(receiveResult.Message);
+
                 try
                 {
-                    if (parsed)
-                        await _publisher.Publish(new MessageReceived(message), cancellationToken);
-                    else
-                        await _publisher.Publish(new UnknownMessageReceived(receiveResult.Message), cancellationToken);
+                    await _publisher.Publish(notification, cancellationToken);
                 }
                 catch (OperationCanceledException) { }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error publishing {Notification}", nameof(MessageReceived));
+                    _logger.LogError(ex, "Error publishing {Notification}", notification.GetType().Name);
                 }
             }
         }

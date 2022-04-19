@@ -82,9 +82,8 @@ public class TmiService : IHostedService, IDisposable
             if (!IsStarted)
                 throw new InvalidOperationException("Not started");
 
-            if (_client.IsConnected)
-                await _client.DisconnectAsync(cancellationToken)
-                    .ConfigureAwait(false);
+            await DisconnectAsync(cancellationToken)
+                .ConfigureAwait(false);
 
             _cts.Cancel();
             _cts.Dispose();
@@ -132,11 +131,8 @@ public class TmiService : IHostedService, IDisposable
 
         try
         {
-            if (_client.IsConnected)
-                await _client.DisconnectAsync(cancellationToken)
-                    .ConfigureAwait(false);
-
-            _logger.LogDebug("Disconnected");
+            await DisconnectAsync(cancellationToken)
+                .ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -148,6 +144,16 @@ public class TmiService : IHostedService, IDisposable
 
         if (_senderTask is { } senderTask)
             await senderTask;
+    }
+
+    private async Task DisconnectAsync(CancellationToken cancellationToken)
+    {
+        if (!_client.IsConnected) return;
+
+        await _client.DisconnectAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        _logger.LogDebug("Disconnected");
     }
 
     private async Task ReconnectAsync(CancellationToken cancellationToken)

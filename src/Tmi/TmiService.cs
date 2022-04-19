@@ -82,6 +82,10 @@ public class TmiService : IHostedService, IDisposable
             if (!IsStarted)
                 throw new InvalidOperationException("Not started");
 
+            if (_client.IsConnected)
+                await _client.DisconnectAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
             _cts.Cancel();
             _cts.Dispose();
             await StopInternalAsync(cancellationToken)
@@ -126,12 +130,11 @@ public class TmiService : IHostedService, IDisposable
     {
         Debug.Assert(IsStarted);
 
-        if (!_client.IsConnected) return;
-
         try
         {
-            await _client.DisconnectAsync(cancellationToken)
-                .ConfigureAwait(false);
+            if (_client.IsConnected)
+                await _client.DisconnectAsync(cancellationToken)
+                    .ConfigureAwait(false);
 
             _logger.LogDebug("Disconnected");
         }

@@ -142,6 +142,8 @@ public class TmiService : IHostedService, IDisposable
 
     private async Task ReconnectAsync(CancellationToken cancellationToken)
     {
+        await Task.Yield();
+
         if (cancellationToken.IsCancellationRequested)
             return;
 

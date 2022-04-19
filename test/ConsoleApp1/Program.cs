@@ -1,8 +1,8 @@
 ﻿using Teraa.Twitch.Tmi;
 
 var client = new WsClient();
-// await client.ConnectAsync(new Uri("ws://localhost:5033/ws"));
-await client.ConnectAsync(new Uri("wss://irc-ws.chat.twitch.tv:443"));
+await client.ConnectAsync(new Uri("ws://localhost:5033/ws"));
+// await client.ConnectAsync(new Uri("wss://irc-ws.chat.twitch.tv:443"));
 
 var cts = new CancellationTokenSource();
 var readTask = Task.Run(async () =>

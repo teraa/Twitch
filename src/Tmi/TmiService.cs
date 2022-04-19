@@ -82,9 +82,12 @@ public class TmiService : IHostedService, IDisposable
             if (!IsStarted)
                 throw new InvalidOperationException("Not started");
 
+            // Properly disconnect before calling Cancel(), as that cancels the read operation
+            // which terminates the connection without close handshake
             await DisconnectAsync(cancellationToken)
                 .ConfigureAwait(false);
 
+            // Cancel needed to await tasks inside StopInternalAsync
             _cts.Cancel();
             _cts.Dispose();
             await StopInternalAsync(cancellationToken)

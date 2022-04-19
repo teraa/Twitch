@@ -18,7 +18,10 @@ var services = new ServiceCollection()
     })
     .AddMediatR(typeof(Program))
     .AddSingleton<IClient>(new WsClient())
-    .AddSingleton<TmiServiceOptions>()
+    .Configure<TmiServiceOptions>(options =>
+    {
+        options.Uri = new Uri("ws://localhost:5033/ws");
+    })
     .AddSingleton<TmiService>()
     .BuildServiceProvider();
 

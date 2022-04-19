@@ -1,5 +1,4 @@
 ﻿using System.Buffers;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO.Pipelines;
 using System.Net.WebSockets;
@@ -98,8 +97,6 @@ public sealed class WsClient : IWsClient, IDisposable
         }
 
         string? message = await _sr.ReadLineAsync().ConfigureAwait(false);
-        // TODO: what happens when there is multiple newlines in a row without other characters
-        Debug.Assert(message is {Length: > 0});
 
         if (_sr.EndOfStream)
         {

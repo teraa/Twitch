@@ -106,7 +106,7 @@ public abstract class WsService : IHostedService, IDisposable
     }
 
     protected abstract ValueTask HandleConnectAsync(CancellationToken cancellationToken);
-    protected abstract ValueTask HandleReceivedAsync(ReceiveResult receiveResult, CancellationToken cancellationToken);
+    protected abstract ValueTask HandleReceivedAsync(string message, CancellationToken cancellationToken);
 
     private async Task StartInternalAsync(CancellationToken cancellationToken)
     {
@@ -287,7 +287,19 @@ public abstract class WsService : IHostedService, IDisposable
                     break;
                 }
 
-                await HandleReceivedAsync(receiveResult, cancellationToken);
+                switch (receiveResult.Message)
+                {
+                    case null:
+                        _logger.LogTrace("Received null message");
+                        continue;
+                    case {Length: 0}:
+                        _logger.LogTrace("Received empty message");
+                        continue;
+                }
+
+                _logger.LogTrace("Received: {Message}", receiveResult.Message);
+
+                await HandleReceivedAsync(receiveResult.Message, cancellationToken);
             }
         }
         catch (OperationCanceledException) { }

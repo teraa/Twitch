@@ -2,8 +2,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Teraa.Irc;
+using Teraa.Twitch.PubSub;
 using Teraa.Twitch.Tmi;
-using Teraa.Twitch.Tmi.Notifications;
+using Connected = Teraa.Twitch.Tmi.Notifications.Connected;
+using MessageReceived = Teraa.Twitch.Tmi.Notifications.MessageReceived;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Verbose()
@@ -17,14 +19,15 @@ var services = new ServiceCollection()
         configure.AddSerilog();
     })
     .AddMediatR(typeof(Program))
-    .AddTmiService()
-    .Configure<TmiServiceOptions>(options =>
-    {
-        options.Uri = new Uri("ws://localhost:5033/ws");
-    })
+    // .AddTmiService()
+    // .Configure<TmiServiceOptions>(options =>
+    // {
+    //     options.Uri = new Uri("ws://localhost:5033/ws");
+    // })
+    .AddPubSubService()
     .BuildServiceProvider();
 
-var client = services.GetRequiredService<TmiService>();
+var client = services.GetRequiredService<PubSubService>();
 await client.StartAsync();
 
 string? line;
@@ -41,12 +44,13 @@ while ((line = Console.ReadLine()) is not null)
             await client.StopAsync();
             break;
         default:
-            if (!Message.TryParse(line, out var message))
-            {
-                Console.WriteLine("Invalid message format.");
-                continue;
-            }
-            client.EnqueueMessage(message);
+            // if (!Message.TryParse(line, out var message))
+            // {
+            //     Console.WriteLine("Invalid message format.");
+            //     continue;
+            // }
+            // client.EnqueueMessage(message);
+            client.EnqueueMessage(line);
             break;
     }
 }

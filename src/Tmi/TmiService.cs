@@ -34,31 +34,14 @@ public sealed class TmiService : WsService
 
     protected override async ValueTask HandleConnectAsync(CancellationToken cancellationToken)
     {
-        try
-        {
-            await _publisher.Publish(new Connected(), cancellationToken);
-        }
-        catch (OperationCanceledException) { }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error publishing {Notification}", nameof(Connected));
-        }
+        await PublishAsync(new Connected(), cancellationToken);
     }
 
-    protected override async ValueTask HandleReceivedAsync(ReceiveResult receiveResult, CancellationToken cancellationToken)
+    protected override async ValueTask HandleReceivedAsync(string rawMessage, CancellationToken cancellationToken)
     {
-        if (receiveResult.Message is null)
-        {
-            _logger.LogInformation("Received null");
-            return;
-        }
+        INotification notification;
 
-        bool parsed = Message.TryParse(receiveResult.Message, out var message);
-
-        _logger.LogTrace("Received: {Parsed}, {Message}",
-            parsed, receiveResult.Message);
-
-        if (parsed)
+        if (Message.TryParse(rawMessage, out var message))
         {
             switch (message)
             {
@@ -73,12 +56,21 @@ public sealed class TmiService : WsService
                     });
                     break;
             }
+
+            notification = new MessageReceived(message);
+        }
+        else
+        {
+            _logger.LogTrace("Parse failed: {Message}", rawMessage);
+
+            notification = new UnknownMessageReceived(rawMessage);
         }
 
-        INotification notification = parsed
-            ? new MessageReceived(message)
-            : new UnknownMessageReceived(receiveResult.Message);
+        await PublishAsync(notification, cancellationToken);
+    }
 
+    private async Task PublishAsync(INotification notification, CancellationToken cancellationToken)
+    {
         try
         {
             await _publisher.Publish(notification, cancellationToken);

@@ -13,7 +13,7 @@ public class TmiServiceOptions : IWsServiceOptions
 }
 
 [PublicAPI]
-public class TmiService : WsService
+public sealed class TmiService : WsService
 {
     private readonly IPublisher _publisher;
     private readonly ILogger<TmiService> _logger;

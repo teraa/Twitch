@@ -325,9 +325,18 @@ public abstract class WsService : IHostedService, IDisposable
         _ = ReconnectAsync(cancellationToken);
     }
 
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _sem.Dispose();
+            _cts?.Dispose();
+        }
+    }
+
     public void Dispose()
     {
-        _sem.Dispose();
-        _cts?.Dispose();
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 }

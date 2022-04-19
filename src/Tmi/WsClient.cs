@@ -18,7 +18,7 @@ public interface IWsClient
 }
 
 [PublicAPI]
-public class WsClient : IWsClient, IDisposable
+public sealed class WsClient : IWsClient, IDisposable
 {
     private ClientWebSocket? _client;
     private StreamReader? _sr;
@@ -131,18 +131,9 @@ public class WsClient : IWsClient, IDisposable
         }
     }
 
-    protected virtual void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            _client?.Dispose();
-            _sr?.Dispose();
-        }
-    }
-
     public void Dispose()
     {
-        Dispose(true);
-        GC.SuppressFinalize(this);
+        _client?.Dispose();
+        _sr?.Dispose();
     }
 }

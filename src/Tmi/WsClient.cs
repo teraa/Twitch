@@ -143,9 +143,18 @@ public class WsClient : IWsClient, IDisposable
         }
     }
 
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _client?.Dispose();
+            _sr?.Dispose();
+        }
+    }
+
     public void Dispose()
     {
-        _client?.Dispose();
-        _sr?.Dispose();
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 }

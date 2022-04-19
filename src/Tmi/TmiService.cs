@@ -17,7 +17,7 @@ public class TmiService : WsService<Message>
     private readonly ILogger<TmiService> _logger;
 
     public TmiService(
-        IClient client,
+        IWsClient client,
         IPublisher publisher,
         IOptions<TmiServiceOptions> options,
         ILogger<TmiService> logger)

@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Teraa.Twitch.Tmi;
 
-public interface IClient
+public interface IWsClient
 {
     bool IsConnected { get; }
     Task ConnectAsync(Uri uri, CancellationToken cancellationToken = default);
@@ -28,7 +28,7 @@ public readonly struct ReceiveResult
     public string? Message { get; }
 }
 
-public class WsClient : IClient, IDisposable
+public class WsClient : IWsClient, IDisposable
 {
     private ClientWebSocket? _client;
     private StreamReader? _sr;

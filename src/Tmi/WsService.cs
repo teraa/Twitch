@@ -10,7 +10,7 @@ namespace Teraa.Twitch.Tmi;
 public abstract class WsService<TMessage> : IHostedService, IDisposable
     where TMessage : notnull
 {
-    private readonly IClient _client;
+    private readonly IWsClient _client;
     private readonly Channel<TMessage> _sendChannel;
     private readonly TmiServiceOptions _options;
     private readonly ILogger<WsService<TMessage>> _logger;
@@ -21,7 +21,7 @@ public abstract class WsService<TMessage> : IHostedService, IDisposable
     private DateTimeOffset _connectedAt;
     private int _fastDisconnects;
 
-    protected WsService(IClient client, IOptions<TmiServiceOptions> options, ILogger<WsService<TMessage>> logger)
+    protected WsService(IWsClient client, IOptions<TmiServiceOptions> options, ILogger<WsService<TMessage>> logger)
     {
         _client = client;
         _options = options.Value;

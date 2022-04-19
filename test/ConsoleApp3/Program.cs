@@ -17,12 +17,11 @@ var services = new ServiceCollection()
         configure.AddSerilog();
     })
     .AddMediatR(typeof(Program))
-    .AddSingleton<IClient>(new WsClient())
+    .AddTmiService()
     .Configure<TmiServiceOptions>(options =>
     {
         options.Uri = new Uri("ws://localhost:5033/ws");
     })
-    .AddSingleton<TmiService>()
     .BuildServiceProvider();
 
 var client = services.GetRequiredService<TmiService>();
@@ -52,7 +51,8 @@ while ((line = Console.ReadLine()) is not null)
     }
 }
 
-await client.StopAsync();
+if (client.IsStarted)
+    await client.StopAsync();
 
 public class MessageHandler : INotificationHandler<MessageReceived>
 {
@@ -87,6 +87,7 @@ public class ConnectedHandler : INotificationHandler<Connected>
     public Task Handle(Connected notification, CancellationToken cancellationToken)
     {
         _tmi.EnqueueMessage(Message.Parse("nick justinfan1"));
+        // _tmi.EnqueueMessage(Message.Parse("nick"));
 
         return Task.CompletedTask;
     }

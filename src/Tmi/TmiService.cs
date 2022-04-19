@@ -62,6 +62,7 @@ public class TmiService : IHostedService, IDisposable
 
             IsStarted = true;
 
+            _cts?.Dispose();
             _cts = new CancellationTokenSource();
             await StartInternalAsync(cancellationToken)
                 .ConfigureAwait(false);
@@ -82,6 +83,7 @@ public class TmiService : IHostedService, IDisposable
                 throw new InvalidOperationException("Not started");
 
             _cts.Cancel();
+            _cts.Dispose();
             await StopInternalAsync(cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -174,6 +176,7 @@ public class TmiService : IHostedService, IDisposable
 
             _isReconnecting = true;
             _cts.Cancel();
+            _cts.Dispose();
             _cts = new CancellationTokenSource();
             cancellationToken = _cts.Token;
         }

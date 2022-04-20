@@ -28,7 +28,11 @@ var services = new ServiceCollection()
     {
         // options.Uri = new Uri("ws://localhost:5033/ws");
     })
-    .BuildServiceProvider();
+    .BuildServiceProvider(new ServiceProviderOptions
+    {
+        ValidateScopes = true,
+        ValidateOnBuild = true,
+    });
 
 // var client = services.GetRequiredService<PubSubService>();
 var client = services.GetRequiredService<TmiService>();

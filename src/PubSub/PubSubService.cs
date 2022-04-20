@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using JetBrains.Annotations;
 using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Teraa.Twitch.PubSub.Notifications;
@@ -17,17 +18,17 @@ public class PubSubServiceOptions : IWsServiceOptions
 public class PubSubService : WsService
 {
     private readonly ILogger<PubSubService> _logger;
-    private readonly IPublisher _publisher;
+    private readonly IServiceProvider _services;
 
     public PubSubService(
         IWsClient client,
         IOptions<PubSubServiceOptions> options,
         ILogger<PubSubService> logger,
-        IPublisher publisher)
+        IServiceProvider services)
         : base(client, options, logger)
     {
         _logger = logger;
-        _publisher = publisher;
+        _services = services;
     }
 
     protected override async ValueTask HandleConnectAsync(CancellationToken cancellationToken)
@@ -44,7 +45,9 @@ public class PubSubService : WsService
     {
         try
         {
-            await _publisher.Publish(notification, cancellationToken);
+            await using var scope = _services.CreateAsyncScope();
+            var publisher = scope.ServiceProvider.GetRequiredService<IPublisher>();
+            await publisher.Publish(notification, cancellationToken);
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)

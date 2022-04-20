@@ -1,5 +1,6 @@
 ﻿using JetBrains.Annotations;
 using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Teraa.Irc;
@@ -16,18 +17,18 @@ public class TmiServiceOptions : IWsServiceOptions
 [PublicAPI]
 public sealed class TmiService : WsService
 {
-    private readonly IPublisher _publisher;
     private readonly ILogger<TmiService> _logger;
+    private readonly IServiceProvider _services;
 
     public TmiService(
         IWsClient client,
-        IPublisher publisher,
         IOptions<TmiServiceOptions> options,
-        ILogger<TmiService> logger)
+        ILogger<TmiService> logger,
+        IServiceProvider services)
         : base(client, options, logger)
     {
-        _publisher = publisher;
         _logger = logger;
+        _services = services;
     }
 
     public void EnqueueMessage(Message message)
@@ -74,7 +75,9 @@ public sealed class TmiService : WsService
     {
         try
         {
-            await _publisher.Publish(notification, cancellationToken);
+            await using var scope = _services.CreateAsyncScope();
+            var publisher = scope.ServiceProvider.GetRequiredService<IPublisher>();
+            await publisher.Publish(notification, cancellationToken);
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)

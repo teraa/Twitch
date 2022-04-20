@@ -1,9 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+    <Import Project="../../Twitch.Targets" />
+
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <AssemblyName>Teraa.Twitch.Tmi</AssemblyName>
         <RootNamespace>Teraa.Twitch.Tmi</RootNamespace>
     </PropertyGroup>
 

@@ -118,7 +118,7 @@ public abstract class WsService : IHostedService, IDisposable
             .ConfigureAwait(false);
 
         _connectedAt = DateTimeOffset.UtcNow;
-        _logger.LogDebug("Connected");
+        _logger.LogInformation("Connected to {Uri}", _options.Uri);
 
         _receiverTask = ReceiverAsync(_cts.Token);
         _senderTask = SenderAsync(_cts.Token);
@@ -153,7 +153,7 @@ public abstract class WsService : IHostedService, IDisposable
         await _client.DisconnectAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        _logger.LogDebug("Disconnected");
+        _logger.LogInformation("Disconnected");
     }
 
     protected async Task ReconnectAsync(CancellationToken cancellationToken)

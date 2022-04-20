@@ -63,7 +63,7 @@ public sealed class TmiService : WsService
         }
         else
         {
-            _logger.LogTrace("Parse failed: {Message}", rawMessage);
+            _logger.LogTrace("Unknown message: {Message}", rawMessage);
 
             notification = new UnknownMessageReceived(rawMessage);
         }

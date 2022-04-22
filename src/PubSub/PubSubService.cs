@@ -11,7 +11,7 @@ namespace Teraa.Twitch.PubSub;
 
 public class PubSubServiceOptions : IWsServiceOptions
 {
-    public Uri Uri { get; set; } = new Uri("wss://pubsub-edge.twitch.tv");
+    public Uri Uri { get; set; } = new("wss://pubsub-edge.twitch.tv");
     public Func<IServiceProvider, IPublisher> PublisherFactory { get; set; } = x => x.GetRequiredService<IPublisher>();
 }
 

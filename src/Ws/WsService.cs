@@ -10,7 +10,7 @@ namespace Teraa.Twitch.Ws;
 
 public interface IWsServiceOptions
 {
-    Uri Uri { get; }
+    Uri Uri { get; set; }
 }
 
 [PublicAPI]

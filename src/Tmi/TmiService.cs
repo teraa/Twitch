@@ -11,7 +11,7 @@ namespace Teraa.Twitch.Tmi;
 
 public class TmiServiceOptions : IWsServiceOptions
 {
-    public Uri Uri { get; set; } = new Uri("wss://irc-ws.chat.twitch.tv:443");
+    public Uri Uri { get; set; } = new("wss://irc-ws.chat.twitch.tv:443");
     public Func<IServiceProvider, IPublisher> PublisherFactory { get; set; } = x => x.GetRequiredService<IPublisher>();
 }
 

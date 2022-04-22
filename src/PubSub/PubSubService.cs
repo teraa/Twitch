@@ -1,10 +1,13 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Teraa.Twitch.PubSub.Notifications;
+using Teraa.Twitch.PubSub.Payloads;
 using Teraa.Twitch.Ws;
 
 namespace Teraa.Twitch.PubSub;
@@ -14,6 +17,11 @@ public class PubSubServiceOptions : IWsServiceOptions
 {
     public Uri Uri { get; set; } = new("wss://pubsub-edge.twitch.tv");
     public Func<IServiceProvider, IPublisher> PublisherFactory { get; set; } = x => x.GetRequiredService<IPublisher>();
+    public JsonSerializerOptions JsonSerializerOptions { get; set; } = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = { new JsonStringEnumConverter() }
+    };
 }
 
 [PublicAPI]
@@ -35,14 +43,69 @@ public class PubSubService : WsService
         _services = services;
     }
 
+    public void EnqueueMessage(Payload message)
+    {
+        // Polymorphic serialization
+        string json = JsonSerializer.Serialize<object>(message, _options.JsonSerializerOptions);
+        EnqueueMessage(json);
+    }
+
     protected override async ValueTask HandleConnectAsync(CancellationToken cancellationToken)
     {
         await PublishAsync(new Connected(), cancellationToken);
     }
 
-    protected override async ValueTask HandleReceivedAsync(string message, CancellationToken cancellationToken)
+    protected override async ValueTask HandleReceivedAsync(string rawMessage, CancellationToken cancellationToken)
     {
-        await PublishAsync(new MessageReceived(message), cancellationToken);
+        using var doc = JsonDocument.Parse(rawMessage);
+
+        await PublishAsync(new PayloadReceived(doc), cancellationToken);
+
+        var elem = doc.RootElement;
+        var payloadType = elem.GetProperty("type").Deserialize<PayloadType>(_options.JsonSerializerOptions);
+
+        switch (payloadType)
+        {
+            case PayloadType.RECONNECT:
+                _ = ReconnectAsync(cancellationToken);
+                await PublishAsync(new ReconnectReceived(), cancellationToken);
+                break;
+
+            case PayloadType.PONG:
+                // TODO: ok if received within 10s of PING, else reconnect
+                await PublishAsync(new PongReceived(), cancellationToken);
+                break;
+
+            case PayloadType.RESPONSE:
+            {
+                var error = elem.GetProperty("error").GetString();
+                var nonce = elem.GetProperty("nonce").GetString();
+                Debug.Assert(error is not null);
+                Debug.Assert(nonce is not null);
+
+                await PublishAsync(new ResponseReceived(error, nonce), cancellationToken);
+                break;
+            }
+
+            case PayloadType.MESSAGE:
+            {
+                var data = elem.GetProperty("data");
+                var topic = data.GetProperty("topic").GetString();
+                var message = data.GetProperty("message").GetString();
+
+                Debug.Assert(topic is not null);
+                Debug.Assert(message is not null);
+
+                using var messageDoc = JsonDocument.Parse(message);
+                await PublishAsync(new MessageReceived(topic, messageDoc), cancellationToken);
+                break;
+            }
+
+            default:
+                _logger.LogTrace("Unknown payload: {Payload}", rawMessage);
+                await PublishAsync(new UnknownPayloadReceived(doc), cancellationToken);
+                break;
+        }
     }
 
     private async Task PublishAsync(INotification notification, CancellationToken cancellationToken)

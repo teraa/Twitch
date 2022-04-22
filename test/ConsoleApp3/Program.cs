@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Teraa.Irc;
 using Teraa.Twitch.PubSub;
+using Teraa.Twitch.PubSub.Payloads;
 using Teraa.Twitch.Tmi;
 using Teraa.Twitch.Tmi.Notifications;
 
@@ -34,8 +35,8 @@ var services = new ServiceCollection()
         ValidateOnBuild = true,
     });
 
-// var client = services.GetRequiredService<PubSubService>();
-var client = services.GetRequiredService<TmiService>();
+var client = services.GetRequiredService<PubSubService>();
+// var client = services.GetRequiredService<TmiService>();
 await client.StartAsync();
 
 string? line;
@@ -52,13 +53,13 @@ while ((line = Console.ReadLine()) is not null)
             await client.StopAsync();
             break;
         default:
-            if (!Message.TryParse(line, out var message))
-            {
-                Console.WriteLine("Invalid message format.");
-                continue;
-            }
-            client.EnqueueMessage(message);
-            // client.EnqueueMessage(line);
+            // if (!Message.TryParse(line, out var message))
+            // {
+            //     Console.WriteLine("Invalid message format.");
+            //     continue;
+            // }
+            // client.EnqueueMessage(message);
+            client.EnqueueMessage(line);
             break;
     }
 }
@@ -90,6 +91,23 @@ public class ConnectedHandler : INotificationHandler<Connected>
     {
         _tmi.EnqueueMessage(Message.Parse("nick justinfan1"));
 
+        return Task.CompletedTask;
+    }
+}
+
+public class PubSubConnectedHandler : INotificationHandler<Teraa.Twitch.PubSub.Notifications.Connected>
+{
+    private readonly PubSubService _pubSub;
+
+    public PubSubConnectedHandler(PubSubService pubSub)
+    {
+        _pubSub = pubSub;
+    }
+
+    public Task Handle(Teraa.Twitch.PubSub.Notifications.Connected notification, CancellationToken cancellationToken)
+    {
+        _pubSub.EnqueueMessage(Payload.CreatePingRequest());
+        _pubSub.EnqueueMessage(Payload.CreateListenRequest(new List<string>{"topic"}, "token"));
         return Task.CompletedTask;
     }
 }

@@ -214,7 +214,7 @@ public abstract class WsService : IHostedService, IDisposable
             }
 
             _isReconnecting = true;
-            _cts.Cancel();
+            _cts.Cancel(); // TODO: this will run and throw sometimes when manually stopping
             _cts.Dispose();
             _cts = new CancellationTokenSource();
             cancellationToken = _cts.Token;

@@ -12,11 +12,13 @@ namespace Teraa.Twitch.Tmi;
 public class TmiServiceOptions : IWsServiceOptions
 {
     public Uri Uri { get; set; } = new Uri("wss://irc-ws.chat.twitch.tv:443");
+    public Func<IServiceProvider, IPublisher> PublisherFactory { get; set; } = x => x.GetRequiredService<IPublisher>();
 }
 
 [PublicAPI]
 public sealed class TmiService : WsService
 {
+    private readonly TmiServiceOptions _options;
     private readonly ILogger<TmiService> _logger;
     private readonly IServiceProvider _services;
 
@@ -27,6 +29,7 @@ public sealed class TmiService : WsService
         IServiceProvider services)
         : base(client, options, logger)
     {
+        _options = options.Value;
         _logger = logger;
         _services = services;
     }
@@ -76,7 +79,7 @@ public sealed class TmiService : WsService
         try
         {
             await using var scope = _services.CreateAsyncScope();
-            var publisher = scope.ServiceProvider.GetRequiredService<IPublisher>();
+            var publisher = _options.PublisherFactory(scope.ServiceProvider);
             await publisher.Publish(notification, cancellationToken);
         }
         catch (OperationCanceledException) { }

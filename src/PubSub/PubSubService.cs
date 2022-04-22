@@ -12,11 +12,13 @@ namespace Teraa.Twitch.PubSub;
 public class PubSubServiceOptions : IWsServiceOptions
 {
     public Uri Uri { get; set; } = new Uri("wss://pubsub-edge.twitch.tv");
+    public Func<IServiceProvider, IPublisher> PublisherFactory { get; set; } = x => x.GetRequiredService<IPublisher>();
 }
 
 [PublicAPI]
 public class PubSubService : WsService
 {
+    private readonly PubSubServiceOptions _options;
     private readonly ILogger<PubSubService> _logger;
     private readonly IServiceProvider _services;
 
@@ -27,6 +29,7 @@ public class PubSubService : WsService
         IServiceProvider services)
         : base(client, options, logger)
     {
+        _options = options.Value;
         _logger = logger;
         _services = services;
     }
@@ -46,7 +49,7 @@ public class PubSubService : WsService
         try
         {
             await using var scope = _services.CreateAsyncScope();
-            var publisher = scope.ServiceProvider.GetRequiredService<IPublisher>();
+            var publisher = _options.PublisherFactory(scope.ServiceProvider);
             await publisher.Publish(notification, cancellationToken);
         }
         catch (OperationCanceledException) { }

@@ -108,6 +108,30 @@ public abstract class WsService : IHostedService, IDisposable
     protected abstract ValueTask HandleConnectAsync(CancellationToken cancellationToken);
     protected abstract ValueTask HandleReceivedAsync(string message, CancellationToken cancellationToken);
 
+    private async Task HandleConnectWrapperAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await HandleConnectAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in {Handler}", nameof(HandleConnectAsync));
+        }
+    }
+
+    private async Task HandleReceivedWrapperAsync(string message, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await HandleReceivedAsync(message, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in {Handler}", nameof(HandleReceivedAsync));
+        }
+    }
+
     private async Task StartInternalAsync(CancellationToken cancellationToken)
     {
         Debug.Assert(IsStarted);
@@ -122,7 +146,7 @@ public abstract class WsService : IHostedService, IDisposable
 
         _receiverTask = ReceiverAsync(_cts.Token);
         _senderTask = SenderAsync(_cts.Token);
-        _ = HandleConnectAsync(cancellationToken);
+        _ = HandleConnectWrapperAsync(cancellationToken);
     }
 
     private async Task StopInternalAsync(CancellationToken cancellationToken)
@@ -299,7 +323,7 @@ public abstract class WsService : IHostedService, IDisposable
 
                 _logger.LogTrace("Received: {Message}", receiveResult.Message);
 
-                await HandleReceivedAsync(receiveResult.Message, cancellationToken);
+                await HandleReceivedWrapperAsync(receiveResult.Message, cancellationToken);
             }
         }
         catch (OperationCanceledException) { }

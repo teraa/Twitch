@@ -9,6 +9,7 @@ using Teraa.Twitch.Ws;
 
 namespace Teraa.Twitch.PubSub;
 
+[PublicAPI]
 public class PubSubServiceOptions : IWsServiceOptions
 {
     public Uri Uri { get; set; } = new("wss://pubsub-edge.twitch.tv");

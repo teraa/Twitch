@@ -1,6 +1,7 @@
-﻿using MediatR;
+﻿using JetBrains.Annotations;
+using MediatR;
 
 namespace Teraa.Twitch.PubSub.Notifications;
 
-public record Connected : INotification;
-public record MessageReceived(string Message) : INotification;
+[PublicAPI] public record Connected : INotification;
+[PublicAPI] public record MessageReceived(string Message) : INotification;

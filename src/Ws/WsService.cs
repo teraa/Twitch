@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace Teraa.Twitch.Ws;
 
+[PublicAPI]
 public interface IWsServiceOptions
 {
     Uri Uri { get; set; }

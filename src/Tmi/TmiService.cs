@@ -13,7 +13,12 @@ namespace Teraa.Twitch.Tmi;
 public class TmiServiceOptions : IWsServiceOptions
 {
     public Uri Uri { get; set; } = new("wss://irc-ws.chat.twitch.tv:443");
+
     public Func<IServiceProvider, IPublisher> PublisherFactory { get; set; } = x => x.GetRequiredService<IPublisher>();
+
+    public TimeSpan PingInterval { get; set; } = TimeSpan.FromMinutes(4);
+
+    public TimeSpan MaxPongDelay { get; set; } = TimeSpan.FromSeconds(10);
 }
 
 [PublicAPI]
@@ -22,6 +27,7 @@ public sealed class TmiService : WsService
     private readonly TmiServiceOptions _options;
     private readonly ILogger<TmiService> _logger;
     private readonly IServiceProvider _services;
+    private DateTimeOffset _lastPongAt;
 
     public TmiService(
         IWsClient client,
@@ -37,6 +43,31 @@ public sealed class TmiService : WsService
 
     public void EnqueueMessage(Message message)
         => EnqueueMessage(message.ToString());
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            if (!IsReconnecting)
+            {
+                var enqueuedAt = DateTimeOffset.UtcNow;
+                EnqueueMessage(new Message
+                {
+                    Command = Command.PING,
+                });
+
+                await Task.Delay(_options.MaxPongDelay, stoppingToken);
+
+                if (_lastPongAt < enqueuedAt)
+                {
+                    _logger.LogWarning("No PONG received within {Time}, reconnecting", _options.MaxPongDelay);
+                    _ = ReconnectAsync(stoppingToken);
+                }
+            }
+
+            await Task.Delay(_options.PingInterval - _options.MaxPongDelay, stoppingToken);
+        }
+    }
 
     protected override async ValueTask HandleConnectAsync(CancellationToken cancellationToken)
     {
@@ -60,6 +91,10 @@ public sealed class TmiService : WsService
                     {
                         Command = Command.PONG,
                     });
+                    break;
+
+                case {Command: Command.PONG}:
+                    _lastPongAt = DateTimeOffset.UtcNow;
                     break;
             }
 

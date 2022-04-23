@@ -37,7 +37,7 @@ var services = new ServiceCollection()
 
 var client = services.GetRequiredService<PubSubService>();
 // var client = services.GetRequiredService<TmiService>();
-await client.StartAsync();
+await client.StartAsync(default);
 
 string? line;
 while ((line = Console.ReadLine()) is not null)
@@ -46,11 +46,11 @@ while ((line = Console.ReadLine()) is not null)
     {
         case "c":
             if (client.IsStarted) break;
-            await client.StartAsync();
+            await client.StartAsync(default);
             break;
         case "d":
             if (!client.IsStarted) break;
-            await client.StopAsync();
+            await client.StopAsync(default);
             break;
         default:
             // if (!Message.TryParse(line, out var message))
@@ -65,7 +65,7 @@ while ((line = Console.ReadLine()) is not null)
 }
 
 if (client.IsStarted)
-    await client.StopAsync();
+    await client.StopAsync(default);
 
 public class MessageHandler : INotificationHandler<MessageReceived>
 {

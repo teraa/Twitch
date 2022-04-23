@@ -15,7 +15,7 @@ public interface IWsServiceOptions
 }
 
 [PublicAPI]
-public abstract class WsService : IHostedService, IDisposable
+public abstract class WsService : BackgroundService
 {
     private readonly IWsClient _client;
     private readonly Channel<string> _sendChannel;
@@ -57,7 +57,12 @@ public abstract class WsService : IHostedService, IDisposable
         Debug.Assert(success);
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken = default)
+    protected override Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        return Task.CompletedTask;
+    }
+
+    public override async Task StartAsync(CancellationToken cancellationToken)
     {
         await _sem.WaitAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -77,9 +82,12 @@ public abstract class WsService : IHostedService, IDisposable
         {
             _sem.Release();
         }
+
+        await base.StartAsync(cancellationToken)
+            .ConfigureAwait(false);
     }
 
-    public async Task StopAsync(CancellationToken cancellationToken = default)
+    public override async Task StopAsync(CancellationToken cancellationToken)
     {
         await _sem.WaitAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -104,6 +112,9 @@ public abstract class WsService : IHostedService, IDisposable
             IsStarted = false;
             _sem.Release();
         }
+
+        await base.StopAsync(cancellationToken)
+            .ConfigureAwait(false);
     }
 
     protected abstract ValueTask HandleConnectAsync(CancellationToken cancellationToken);
@@ -369,9 +380,11 @@ public abstract class WsService : IHostedService, IDisposable
             _sem.Dispose();
             _cts?.Dispose();
         }
+
+        base.Dispose();
     }
 
-    public void Dispose()
+    public sealed override void Dispose()
     {
         Dispose(true);
         GC.SuppressFinalize(this);

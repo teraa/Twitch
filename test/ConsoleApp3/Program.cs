@@ -5,7 +5,7 @@ using Teraa.Irc;
 using Teraa.Twitch.PubSub;
 using Teraa.Twitch.PubSub.Payloads;
 using Teraa.Twitch.Tmi;
-using Teraa.Twitch.Tmi.Notifications;
+using Teraa.Twitch.Ws;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Verbose()
@@ -23,6 +23,8 @@ var services = new ServiceCollection()
     .Configure<TmiServiceOptions>(options =>
     {
         // options.Uri = new Uri("ws://localhost:5033/ws");
+        options.PingInterval = TimeSpan.FromSeconds(10);
+        options.MaxPongDelay = TimeSpan.FromSeconds(1);
     })
     .AddPubSubService()
     .Configure<PubSubServiceOptions>(options =>
@@ -35,9 +37,12 @@ var services = new ServiceCollection()
         ValidateOnBuild = true,
     });
 
-var client = services.GetRequiredService<PubSubService>();
-// var client = services.GetRequiredService<TmiService>();
-await client.StartAsync(default);
+WsService svc;
+
+// svc = services.GetRequiredService<PubSubService>();
+svc = services.GetRequiredService<TmiService>();
+
+await svc.StartAsync(default);
 
 string? line;
 while ((line = Console.ReadLine()) is not null)
@@ -45,31 +50,37 @@ while ((line = Console.ReadLine()) is not null)
     switch (line)
     {
         case "c":
-            if (client.IsStarted) break;
-            await client.StartAsync(default);
+            if (svc.IsStarted) break;
+            await svc.StartAsync(default);
             break;
         case "d":
-            if (!client.IsStarted) break;
-            await client.StopAsync(default);
+            if (!svc.IsStarted) break;
+            await svc.StopAsync(default);
             break;
         default:
-            // if (!Message.TryParse(line, out var message))
-            // {
-            //     Console.WriteLine("Invalid message format.");
-            //     continue;
-            // }
-            // client.EnqueueMessage(message);
-            client.EnqueueMessage(line);
+            if (svc is TmiService tmi)
+            {
+                if (!Message.TryParse(line, out var message))
+                {
+                    Console.WriteLine("Invalid message format.");
+                    continue;
+                }
+                tmi.EnqueueMessage(message);
+            }
+            else
+            {
+                svc.EnqueueMessage(line);
+            }
             break;
     }
 }
 
-if (client.IsStarted)
-    await client.StopAsync(default);
+if (svc.IsStarted)
+    await svc.StopAsync(default);
 
-public class MessageHandler : INotificationHandler<MessageReceived>
+public class MessageHandler : INotificationHandler<Teraa.Twitch.Tmi.Notifications.MessageReceived>
 {
-    public Task Handle(MessageReceived received, CancellationToken cancellationToken)
+    public Task Handle(Teraa.Twitch.Tmi.Notifications.MessageReceived received, CancellationToken cancellationToken)
     {
         if (received.Message is {Command: Command.PONG, Content.Text: "throw"})
             throw new ArgumentException("pong");
@@ -78,7 +89,7 @@ public class MessageHandler : INotificationHandler<MessageReceived>
     }
 }
 
-public class ConnectedHandler : INotificationHandler<Connected>
+public class ConnectedHandler : INotificationHandler<Teraa.Twitch.Tmi.Notifications.Connected>
 {
     private readonly TmiService _tmi;
 
@@ -87,7 +98,7 @@ public class ConnectedHandler : INotificationHandler<Connected>
         _tmi = tmi;
     }
 
-    public Task Handle(Connected notification, CancellationToken cancellationToken)
+    public Task Handle(Teraa.Twitch.Tmi.Notifications.Connected notification, CancellationToken cancellationToken)
     {
         _tmi.EnqueueMessage(Message.Parse("nick justinfan1"));
 

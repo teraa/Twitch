@@ -22,7 +22,8 @@ public class PubSubServiceOptions : IWsServiceOptions
     public JsonSerializerOptions JsonSerializerOptions { get; set; } = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter() }
+        Converters = { new JsonStringEnumConverter() },
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
     public TimeSpan MaxPongDelay { get; set; } = TimeSpan.FromSeconds(10);

@@ -16,18 +16,16 @@ public enum PayloadType
 }
 
 [PublicAPI]
-public record Payload(
-    PayloadType Type,
-    string Nonce = "")
+public record Payload(PayloadType Type, string? Nonce = null)
 {
     public static Payload<ListenPayloadData> CreateListenRequest(
         IReadOnlyList<string> topics,
         string authToken,
-        string nonce = "")
+        string? nonce = null)
         => new(PayloadType.LISTEN, new ListenPayloadData(topics, authToken), nonce);
 
-    public static Payload CreatePingRequest(string nonce = "")
-        => new(PayloadType.PING, nonce);
+    public static Payload CreatePingRequest()
+        => new(PayloadType.PING);
 
     public static Payload<UnlistenPayloadData> CreateUnlistenRequest(
         IReadOnlyList<string> topics,
@@ -36,7 +34,7 @@ public record Payload(
 }
 
 [PublicAPI]
-public record Payload<TData>(PayloadType Type, TData Data, string Nonce = "")
+public record Payload<TData>(PayloadType Type, TData Data, string? Nonce = null)
     : Payload(Type, Nonce);
 
 [PublicAPI]

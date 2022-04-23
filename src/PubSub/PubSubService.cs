@@ -26,9 +26,9 @@ public class PubSubServiceOptions : IWsServiceOptions
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
-    public TimeSpan MaxPongDelay { get; set; } = TimeSpan.FromSeconds(10);
-
     public TimeSpan PingInterval { get; set; } = TimeSpan.FromMinutes(4);
+
+    public TimeSpan MaxPongDelay { get; set; } = TimeSpan.FromSeconds(10);
 }
 
 [PublicAPI]

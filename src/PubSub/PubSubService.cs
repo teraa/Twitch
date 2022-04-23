@@ -16,12 +16,18 @@ namespace Teraa.Twitch.PubSub;
 public class PubSubServiceOptions : IWsServiceOptions
 {
     public Uri Uri { get; set; } = new("wss://pubsub-edge.twitch.tv");
+
     public Func<IServiceProvider, IPublisher> PublisherFactory { get; set; } = x => x.GetRequiredService<IPublisher>();
+
     public JsonSerializerOptions JsonSerializerOptions { get; set; } = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         Converters = { new JsonStringEnumConverter() }
     };
+
+    public TimeSpan MaxPongDelay { get; set; } = TimeSpan.FromSeconds(10);
+
+    public TimeSpan PingInterval { get; set; } = TimeSpan.FromMinutes(4);
 }
 
 [PublicAPI]
@@ -30,6 +36,7 @@ public class PubSubService : WsService
     private readonly PubSubServiceOptions _options;
     private readonly ILogger<PubSubService> _logger;
     private readonly IServiceProvider _services;
+    private DateTimeOffset _lastPongAt;
 
     public PubSubService(
         IWsClient client,
@@ -48,6 +55,28 @@ public class PubSubService : WsService
         // Polymorphic serialization
         string json = JsonSerializer.Serialize<object>(message, _options.JsonSerializerOptions);
         EnqueueMessage(json);
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            if (!IsReconnecting)
+            {
+                var enqueuedAt = DateTimeOffset.UtcNow;
+                EnqueueMessage(Payload.CreatePingRequest());
+
+                await Task.Delay(_options.MaxPongDelay, stoppingToken);
+
+                if (_lastPongAt < enqueuedAt)
+                {
+                    _logger.LogWarning("No PONG received within {Time}, reconnecting", _options.MaxPongDelay);
+                    _ = ReconnectAsync(stoppingToken);
+                }
+            }
+
+            await Task.Delay(_options.PingInterval - _options.MaxPongDelay, stoppingToken);
+        }
     }
 
     protected override async ValueTask HandleConnectAsync(CancellationToken cancellationToken)
@@ -72,7 +101,7 @@ public class PubSubService : WsService
                 break;
 
             case PayloadType.PONG:
-                // TODO: ok if received within 10s of PING, else reconnect
+                _lastPongAt = DateTimeOffset.UtcNow;
                 await PublishAsync(new PongReceived(), cancellationToken);
                 break;
 

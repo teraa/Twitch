@@ -24,7 +24,6 @@ public abstract class WsService : BackgroundService
     private readonly SemaphoreSlim _sem;
     private Task? _receiverTask, _senderTask;
     private CancellationTokenSource? _cts;
-    private bool _isReconnecting;
     private DateTimeOffset _connectedAt;
     private int _fastDisconnects;
 
@@ -44,6 +43,7 @@ public abstract class WsService : BackgroundService
 
     [MemberNotNullWhen(true, nameof(_cts))]
     public bool IsStarted { get; private set; }
+    protected bool IsReconnecting { get; private set; }
 
     private static int GetDelaySeconds(int iteration)
     {
@@ -205,7 +205,7 @@ public abstract class WsService : BackgroundService
         }
         catch (Exception ex)
         {
-            _isReconnecting = false;
+            IsReconnecting = false;
             if (ex is not OperationCanceledException)
                 _logger.LogError(ex, "Error reconnecting");
         }
@@ -218,13 +218,13 @@ public abstract class WsService : BackgroundService
         await _sem.WaitAsync(cancellationToken);
         try
         {
-            if (_isReconnecting)
+            if (IsReconnecting)
             {
                 _logger.LogDebug("Concurrent reconnect request");
                 return;
             }
 
-            _isReconnecting = true;
+            IsReconnecting = true;
             _cts.Cancel(); // TODO: this will run and throw sometimes when manually stopping
             _cts.Dispose();
             _cts = new CancellationTokenSource();
@@ -289,14 +289,14 @@ public abstract class WsService : BackgroundService
         if (cancellationToken.IsCancellationRequested)
         {
             _logger.LogDebug("Reconnect aborted");
-            _isReconnecting = false;
+            IsReconnecting = false;
             return;
         }
 
         await _sem.WaitAsync(cancellationToken);
         try
         {
-            _isReconnecting = false;
+            IsReconnecting = false;
         }
         finally
         {

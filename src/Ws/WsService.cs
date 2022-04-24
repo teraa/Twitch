@@ -335,7 +335,7 @@ public abstract class WsService : BackgroundService
 
                 _logger.LogTrace("Received: {Message}", receiveResult.Message);
 
-                await HandleReceivedWrapperAsync(receiveResult.Message, cancellationToken);
+                _ = HandleReceivedWrapperAsync(receiveResult.Message, cancellationToken);
             }
         }
         catch (OperationCanceledException) { }

@@ -29,8 +29,8 @@ public record Payload(PayloadType Type, string? Nonce = null)
 
     public static Payload<UnlistenPayloadData> CreateUnlistenRequest(
         IReadOnlyList<string> topics,
-        string nonce = "")
-        => new(PayloadType.UNLISTEN, new UnlistenPayloadData(topics));
+        string? nonce = null)
+        => new(PayloadType.UNLISTEN, new UnlistenPayloadData(topics), nonce);
 }
 
 [PublicAPI]

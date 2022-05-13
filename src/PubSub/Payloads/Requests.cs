@@ -34,12 +34,17 @@ public record Payload(PayloadType Type, string? Nonce = null)
 }
 
 [PublicAPI]
-public record Payload<TData>(PayloadType Type, TData Data, string? Nonce = null)
-    : Payload(Type, Nonce);
+public record Payload<TData>(
+    PayloadType Type,
+    TData Data,
+    string? Nonce = null
+) : Payload(Type, Nonce);
 
 [PublicAPI]
-public record ListenPayloadData(IReadOnlyList<string> Topics,
+public record ListenPayloadData(
+    [property: JsonPropertyName("topics")] IReadOnlyList<string> Topics,
     [property: JsonPropertyName("auth_token")] string AuthToken);
 
 [PublicAPI]
-public record UnlistenPayloadData(IReadOnlyList<string> Topics);
+public record UnlistenPayloadData(
+    [property: JsonPropertyName("topics")] IReadOnlyList<string> Topics);

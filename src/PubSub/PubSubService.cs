@@ -65,7 +65,7 @@ public class PubSubService : WsService
             if (!IsReconnecting)
             {
                 var enqueuedAt = DateTimeOffset.UtcNow;
-                EnqueueMessage(Payload.CreatePingRequest());
+                EnqueueMessage(Payload.CreatePing());
 
                 await Task.Delay(_options.MaxPongDelay, stoppingToken);
 

@@ -18,16 +18,16 @@ public enum PayloadType
 [PublicAPI]
 public record Payload(PayloadType Type, string? Nonce = null)
 {
-    public static Payload CreatePingRequest()
+    public static Payload CreatePing()
         => new(PayloadType.PING);
 
-    public static Payload<ListenPayloadData> CreateListenRequest(
+    public static Payload<ListenPayloadData> CreateListen(
         IReadOnlyList<string> topics,
         string authToken,
         string? nonce = null)
         => new(PayloadType.LISTEN, new ListenPayloadData(topics, authToken), nonce);
 
-    public static Payload<UnlistenPayloadData> CreateUnlistenRequest(
+    public static Payload<UnlistenPayloadData> CreateUnlisten(
         IReadOnlyList<string> topics,
         string? nonce = null)
         => new(PayloadType.UNLISTEN, new UnlistenPayloadData(topics), nonce);

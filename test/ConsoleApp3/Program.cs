@@ -117,8 +117,8 @@ public class PubSubConnectedHandler : INotificationHandler<Teraa.Twitch.PubSub.N
 
     public Task Handle(Teraa.Twitch.PubSub.Notifications.Connected notification, CancellationToken cancellationToken)
     {
-        _pubSub.EnqueueMessage(Payload.CreatePingRequest());
-        _pubSub.EnqueueMessage(Payload.CreateListenRequest(new List<string>{"topic"}, "token"));
+        _pubSub.EnqueueMessage(Payload.CreatePing());
+        _pubSub.EnqueueMessage(Payload.CreateListen(new List<string>{"topic"}, "token"));
         return Task.CompletedTask;
     }
 }

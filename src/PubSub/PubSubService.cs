@@ -6,7 +6,6 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Teraa.Twitch.PubSub.Messages.ChatModeratorActions;
 using Teraa.Twitch.PubSub.Notifications;
 using Teraa.Twitch.PubSub.Payloads;
 using Teraa.Twitch.PubSub.Topics;
@@ -151,8 +150,12 @@ public class PubSubService : WsService
 
         switch (topic)
         {
-            case ChatModeratorActionsTopic t when Parser.TryParse(message, out var action):
+            case ChatModeratorActionsTopic t when Messages.ChatModeratorActions.Parser.TryParse(message, out var action):
                 await PublishAsync(new ChatModeratorActionReceived(t, action), cancellationToken);
+                break;
+
+            case ChannelUnbanRequestsTopic t when Messages.ChannelUnbanRequests.Parser.TryParse(message, out var request):
+                await PublishAsync(new ChannelUnbanRequestReceived(t, request), cancellationToken);
                 break;
 
             default:

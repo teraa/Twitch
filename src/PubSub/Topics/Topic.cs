@@ -9,16 +9,16 @@ public interface ITopic
 
 public record ChatModeratorActionsTopic(string UserId, string ChannelId) : ITopic
 {
-    public const string Name = "chat_moderator_actions";
+    public const string Prefix = "chat_moderator_actions";
 
-    public string Value => $"{Name}.{UserId}.{ChannelId}";
+    public string Value => $"{Prefix}.{UserId}.{ChannelId}";
 }
 
 public record ChannelUnbanRequestsTopic(string UserId, string ChannelId) : ITopic
 {
-    public const string Name = "channel-unban-requests";
+    public const string Prefix = "channel-unban-requests";
 
-    public string Value => $"{Name}.{UserId}.{ChannelId}";
+    public string Value => $"{Prefix}.{UserId}.{ChannelId}";
 }
 
 public static class Topic
@@ -29,8 +29,8 @@ public static class Topic
 
         topic = parts[0] switch
         {
-            ChatModeratorActionsTopic.Name when parts.Length == 3 => new ChatModeratorActionsTopic(parts[1], parts[2]),
-            ChannelUnbanRequestsTopic.Name when parts.Length == 3 => new ChannelUnbanRequestsTopic(parts[1], parts[2]),
+            ChatModeratorActionsTopic.Prefix when parts.Length == 3 => new ChatModeratorActionsTopic(parts[1], parts[2]),
+            ChannelUnbanRequestsTopic.Prefix when parts.Length == 3 => new ChannelUnbanRequestsTopic(parts[1], parts[2]),
             _ => null,
         };
 

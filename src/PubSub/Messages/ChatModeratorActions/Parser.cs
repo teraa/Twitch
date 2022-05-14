@@ -6,7 +6,7 @@ namespace Teraa.Twitch.PubSub.Messages.ChatModeratorActions;
 // TODO: source generators
 public static class Parser
 {
-    public static bool TryParse(JsonDocument input, [NotNullWhen(true)] out IAction? result)
+    public static bool TryParse(JsonDocument input, [NotNullWhen(true)] out IModeratorAction? result)
     {
         if (!input.RootElement.TryGetProperty("type", out var typeElement) ||
             !input.RootElement.TryGetProperty("data", out var data))
@@ -186,7 +186,7 @@ public static class Parser
         return false;
     }
 
-    public static bool TryParseModeratorAction(JsonElement data, [NotNullWhen(true)] out IAction? result)
+    public static bool TryParseModeratorAction(JsonElement data, [NotNullWhen(true)] out IModeratorAction? result)
     {
         JsonElement e;
 

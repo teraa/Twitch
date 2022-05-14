@@ -1,19 +1,19 @@
 ﻿namespace Teraa.Twitch.PubSub.Messages.ChatModeratorActions;
 
-public interface IAction : IMessage
+public interface IModeratorAction : IMessage
 {
     string Action { get; }
     string InitiatorId { get; }
     string Initiator { get; }
 }
 
-public interface ITargetedAction : IAction
+public interface ITargetedModeratorAction : IModeratorAction
 {
     string TargetId { get; }
     string Target { get; }
 }
 
-public interface ITermAction : IAction
+public interface ITermModeratorAction : IModeratorAction
 {
     string Id { get; }
     string Text { get; }
@@ -29,7 +29,7 @@ public record Ban(
     DateTimeOffset CreatedAt,
     string InitiatorId,
     string Initiator
-) : ITargetedAction;
+) : ITargetedModeratorAction;
 
 public record Unban(
     string Action,
@@ -38,88 +38,88 @@ public record Unban(
     DateTimeOffset CreatedAt,
     string InitiatorId,
     string Initiator
-) : ITargetedAction;
+) : ITargetedModeratorAction;
 
 public record Clear(
     string Action,
     string InitiatorId,
     string Initiator
-) : IAction;
+) : IModeratorAction;
 
 public record EmoteOnly(
     string Action,
     string InitiatorId,
     string Initiator
-) : IAction;
+) : IModeratorAction;
 
 public record EmoteOnlyOff(
     string Action,
     string InitiatorId,
     string Initiator
-) : IAction;
+) : IModeratorAction;
 
 public record Followers(
     string Action,
     TimeSpan Duration,
     string InitiatorId,
     string Initiator
-) : IAction;
+) : IModeratorAction;
 
 public record FollowersOff(
     string Action,
     string InitiatorId,
     string Initiator
-) : IAction;
+) : IModeratorAction;
 
 public record Raid(
     string Action,
     string Target,
     string InitiatorId,
     string Initiator // Not login
-) : IAction;
+) : IModeratorAction;
 
 public record Unraid(
     string Action,
     string InitiatorId,
     string Initiator // Not login
-) : IAction;
+) : IModeratorAction;
 
 public record Slow(
     string Action,
     TimeSpan Duration,
     string InitiatorId,
     string Initiator
-) : IAction;
+) : IModeratorAction;
 
 public record SlowOff(
     string Action,
     string InitiatorId,
     string Initiator
-) : IAction;
+) : IModeratorAction;
 
 public record Subscribers(
     string Action,
     string InitiatorId,
     string Initiator
-) : IAction;
+) : IModeratorAction;
 
 public record SubscribersOff(
     string Action,
     string InitiatorId,
     string Initiator
-) : IAction;
+) : IModeratorAction;
 
 public record R9KBeta(
     string Action,
     string InitiatorId,
     string Initiator
-) : IAction;
+) : IModeratorAction;
 
 public record R9KBetaOff(
     string Action,
     string InitiatorId,
     string Initiator
-) : IAction;
+) : IModeratorAction;
 
 public record Timeout(
     string Action,
@@ -130,7 +130,7 @@ public record Timeout(
     DateTimeOffset CreatedAt,
     string InitiatorId,
     string Initiator
-) : ITargetedAction;
+) : ITargetedModeratorAction;
 
 public record Untimeout(
     string Action,
@@ -139,7 +139,7 @@ public record Untimeout(
     DateTimeOffset CreatedAt,
     string InitiatorId,
     string Initiator
-) : ITargetedAction;
+) : ITargetedModeratorAction;
 
 // -----------------
 
@@ -150,7 +150,7 @@ public record Mod(
     string InitiatorId,
     string Initiator,
     string ChannelId
-) : ITargetedAction;
+) : ITargetedModeratorAction;
 
 public record Unmod(
     string Action,
@@ -159,7 +159,7 @@ public record Unmod(
     string InitiatorId,
     string Initiator,
     string ChannelId
-) : ITargetedAction;
+) : ITargetedModeratorAction;
 
 public record Vip(
     string Action,
@@ -168,7 +168,7 @@ public record Vip(
     string InitiatorId,
     string Initiator,
     string ChannelId
-) : ITargetedAction;
+) : ITargetedModeratorAction;
 
 // -----------------
 
@@ -179,7 +179,7 @@ public record ApproveUnbanRequest(
     string ModeratorMessage,
     string InitiatorId,
     string Initiator
-) : ITargetedAction;
+) : ITargetedModeratorAction;
 
 public record DenyUnbanRequest(
     string Action,
@@ -188,7 +188,7 @@ public record DenyUnbanRequest(
     string ModeratorMessage,
     string InitiatorId,
     string Initiator
-) : ITargetedAction;
+) : ITargetedModeratorAction;
 
 // -----------------
 
@@ -200,7 +200,7 @@ public record AddBlockedTerm(
     string Initiator,
     string ChannelId,
     DateTimeOffset UpdatedAt
-) : ITermAction;
+) : ITermModeratorAction;
 
 public record DeleteBlockedTerm(
     string Action,
@@ -210,7 +210,7 @@ public record DeleteBlockedTerm(
     string Initiator,
     string ChannelId,
     DateTimeOffset UpdatedAt
-) : ITermAction;
+) : ITermModeratorAction;
 
 public record AddPermittedTerm(
     string Action,
@@ -220,7 +220,7 @@ public record AddPermittedTerm(
     string Initiator,
     string ChannelId,
     DateTimeOffset UpdatedAt
-) : ITermAction;
+) : ITermModeratorAction;
 
 public record DeletePermittedTerm(
     string Action,
@@ -230,4 +230,4 @@ public record DeletePermittedTerm(
     string Initiator,
     string ChannelId,
     DateTimeOffset UpdatedAt
-) : ITermAction;
+) : ITermModeratorAction;

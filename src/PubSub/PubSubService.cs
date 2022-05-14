@@ -6,8 +6,10 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Teraa.Twitch.PubSub.Messages.ChatModeratorActions;
 using Teraa.Twitch.PubSub.Notifications;
 using Teraa.Twitch.PubSub.Payloads;
+using Teraa.Twitch.PubSub.Topics;
 using Teraa.Twitch.Ws;
 
 namespace Teraa.Twitch.PubSub;
@@ -128,13 +130,33 @@ public class PubSubService : WsService
 
                 using var messageDoc = JsonDocument.Parse(message);
                 await PublishAsync(new MessageReceived(topic, messageDoc), cancellationToken);
+                await HandleMessageAsync(topic, messageDoc, cancellationToken);
                 break;
             }
 
             default:
-                _logger.LogTrace("Unknown payload: {Payload}", rawMessage);
+                _logger.LogWarning("Unknown payload type: {PayloadType}", payloadType);
                 await PublishAsync(new UnknownPayloadReceived(doc), cancellationToken);
                 break;
+        }
+    }
+
+    private async Task HandleMessageAsync(string topicString, JsonDocument message, CancellationToken cancellationToken)
+    {
+        if (!Topic.TryParse(topicString, out var topic))
+        {
+            _logger.LogWarning("Unknown topic: {Topic}", topicString);
+            return;
+        }
+
+        switch (topic)
+        {
+            case ChatModeratorActionsTopic t when ActionParser.TryParse(message, out var action):
+                await PublishAsync(new ChatModeratorActionReceived(t, action), cancellationToken);
+                break;
+
+            default:
+                throw new NotImplementedException($"Unhandled topic: {topic.GetType()}");
         }
     }
 

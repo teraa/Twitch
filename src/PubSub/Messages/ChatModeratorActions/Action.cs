@@ -1,6 +1,8 @@
 ﻿namespace Teraa.Twitch.PubSub.Messages.ChatModeratorActions;
 
-public interface IAction
+public interface IMessage { }
+
+public interface IAction : IMessage
 {
     string Action { get; }
     string InitiatorId { get; }

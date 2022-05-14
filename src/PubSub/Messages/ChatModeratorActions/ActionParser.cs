@@ -4,7 +4,7 @@ using System.Text.Json;
 namespace Teraa.Twitch.PubSub.Messages.ChatModeratorActions;
 
 // TODO: source generators
-public static class Message
+public static class ActionParser
 {
     public static bool TryParse(JsonDocument input, [NotNullWhen(true)] out IAction? result)
     {
@@ -18,7 +18,7 @@ public static class Message
         var type = typeElement.GetString();
 
         if (type == "moderation_action")
-            return TryParse(data, out result);
+            return TryParseModeratorAction(data, out result);
 
         var moderationAction = Get(data, "moderation_action");
         var createdById = Get(data, "created_by_id");
@@ -199,7 +199,7 @@ public static class Message
         }
     }
 
-    public static bool TryParse(JsonElement data, [NotNullWhen(true)] out IAction? result)
+    public static bool TryParseModeratorAction(JsonElement data, [NotNullWhen(true)] out IAction? result)
     {
         JsonElement e;
 

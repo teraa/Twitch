@@ -1,7 +1,5 @@
 ﻿namespace Teraa.Twitch.PubSub.Messages.ChatModeratorActions;
 
-public interface IMessage { }
-
 public interface IAction : IMessage
 {
     string Action { get; }
@@ -27,7 +25,7 @@ public record Ban(
     string Action,
     string TargetId,
     string Target,
-    string? Reason,
+    string Reason,
     DateTimeOffset CreatedAt,
     string InitiatorId,
     string Initiator
@@ -128,7 +126,7 @@ public record Timeout(
     string TargetId,
     string Target,
     TimeSpan Duration,
-    string? Reason,
+    string Reason,
     DateTimeOffset CreatedAt,
     string InitiatorId,
     string Initiator
@@ -178,7 +176,7 @@ public record ApproveUnbanRequest(
     string Action,
     string TargetId,
     string Target,
-    string? ModeratorMessage,
+    string ModeratorMessage,
     string InitiatorId,
     string Initiator
 ) : ITargetedAction;
@@ -187,7 +185,7 @@ public record DenyUnbanRequest(
     string Action,
     string TargetId,
     string Target,
-    string? ModeratorMessage,
+    string ModeratorMessage,
     string InitiatorId,
     string Initiator
 ) : ITargetedAction;

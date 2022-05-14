@@ -151,7 +151,7 @@ public class PubSubService : WsService
 
         switch (topic)
         {
-            case ChatModeratorActionsTopic t when ActionParser.TryParse(message, out var action):
+            case ChatModeratorActionsTopic t when Parser.TryParse(message, out var action):
                 await PublishAsync(new ChatModeratorActionReceived(t, action), cancellationToken);
                 break;
 

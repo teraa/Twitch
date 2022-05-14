@@ -4,7 +4,7 @@ using System.Text.Json;
 namespace Teraa.Twitch.PubSub.Messages.ChatModeratorActions;
 
 // TODO: source generators
-public static class ActionParser
+public static class Parser
 {
     public static bool TryParse(JsonDocument input, [NotNullWhen(true)] out IAction? result)
     {
@@ -20,16 +20,16 @@ public static class ActionParser
         if (type == "moderation_action")
             return TryParseModeratorAction(data, out result);
 
-        var moderationAction = Get(data, "moderation_action");
-        var createdById = Get(data, "created_by_id");
-        var createdByLogin = Get(data, "created_by_login");
-        var targetUserId = Get(data, "target_user_id");
-        var targetUserLogin = Get(data, "target_user_login");
-        var moderatorMessage = Get(data, "moderator_message");
-        var channelId = Get(data, "channel_id");
-        var createdByUserId = Get(data, "created_by_user_id");
-        var createdBy = Get(data, "created_by");
-        var innerType = Get(data, "type");
+        var moderationAction = data.GetPropertyString("moderation_action");
+        var createdById = data.GetPropertyString("created_by_id");
+        var createdByLogin = data.GetPropertyString("created_by_login");
+        var targetUserId = data.GetPropertyString("target_user_id");
+        var targetUserLogin = data.GetPropertyString("target_user_login");
+        var moderatorMessage = data.GetPropertyString("moderator_message");
+        var channelId = data.GetPropertyString("channel_id");
+        var createdByUserId = data.GetPropertyString("created_by_user_id");
+        var createdBy = data.GetPropertyString("created_by");
+        var innerType = data.GetPropertyString("type");
 
         switch (type)
         {
@@ -39,17 +39,15 @@ public static class ActionParser
                 moderatorMessage is { } &&
                 createdById is { } &&
                 createdByLogin is { }:
-            {
+
                 result = new ApproveUnbanRequest(
                     Action: type,
                     TargetId: targetUserId,
                     Target: targetUserLogin,
-                    ModeratorMessage: moderatorMessage.Length > 0 ? moderatorMessage : null,
+                    ModeratorMessage: moderatorMessage,
                     InitiatorId: createdById,
                     Initiator: createdByLogin);
-
                 return true;
-            }
 
             case "deny_unban_request" when
                 targetUserId is { } &&
@@ -57,17 +55,15 @@ public static class ActionParser
                 moderatorMessage is { } &&
                 createdById is { } &&
                 createdByLogin is { }:
-            {
+
                 result = new DenyUnbanRequest(
                     Action: type,
                     TargetId: targetUserId,
                     Target: targetUserLogin,
-                    ModeratorMessage: moderatorMessage.Length > 0 ? moderatorMessage : null,
+                    ModeratorMessage: moderatorMessage,
                     InitiatorId: createdById,
                     Initiator: createdByLogin);
-
                 return true;
-            }
 
             case "moderator_added" when
                 moderationAction is { } &&
@@ -76,7 +72,7 @@ public static class ActionParser
                 createdByUserId is { } &&
                 createdBy is { } &&
                 channelId is { }:
-            {
+
                 result = new Mod(
                     Action: moderationAction,
                     TargetId: targetUserId,
@@ -85,7 +81,6 @@ public static class ActionParser
                     Initiator: createdBy,
                     ChannelId: channelId);
                 return true;
-            }
 
             case "moderator_removed" when
                 moderationAction is { } &&
@@ -94,7 +89,7 @@ public static class ActionParser
                 createdByUserId is { } &&
                 createdBy is { } &&
                 channelId is { }:
-            {
+
                 result = new Unmod(
                     Action: moderationAction,
                     TargetId: targetUserId,
@@ -103,7 +98,6 @@ public static class ActionParser
                     Initiator: createdBy,
                     ChannelId: channelId);
                 return true;
-            }
 
             case "vip_added" when
                 targetUserId is { } &&
@@ -111,7 +105,7 @@ public static class ActionParser
                 createdByUserId is { } &&
                 createdBy is { } &&
                 channelId is { }:
-            {
+
                 result = new Vip(
                     Action: type,
                     TargetId: targetUserId,
@@ -120,14 +114,13 @@ public static class ActionParser
                     Initiator: createdBy,
                     ChannelId: channelId);
                 return true;
-            }
 
             case "channel_terms_action":
             {
-                var id = Get(data, "id");
-                var text = Get(data, "text");
-                var requesterId = Get(data, "requester_id");
-                var requesterLogin = Get(data, "requester_login");
+                var id = data.GetPropertyString("id");
+                var text = data.GetPropertyString("text");
+                var requesterId = data.GetPropertyString("requester_id");
+                var requesterLogin = data.GetPropertyString("requester_login");
 
                 if (channelId is null ||
                     id is null ||
@@ -136,10 +129,7 @@ public static class ActionParser
                     requesterLogin is null ||
                     !data.TryGetProperty("updated_at", out var updatedAtElement) ||
                     !updatedAtElement.TryGetDateTimeOffset(out var updatedAt))
-                {
-                    result = null;
-                    return false;
-                }
+                    break;
 
                 switch (innerType)
                 {
@@ -186,17 +176,14 @@ public static class ActionParser
                             ChannelId: channelId,
                             UpdatedAt: updatedAt);
                         return true;
-
-                    default:
-                        result = null;
-                        return false;
                 }
-            }
 
-            default:
-                result = null;
-                return false;
+                break;
+            }
         }
+
+        result = null;
+        return false;
     }
 
     public static bool TryParseModeratorAction(JsonElement data, [NotNullWhen(true)] out IAction? result)
@@ -213,12 +200,11 @@ public static class ActionParser
                 : null
             : null;
 
-        var createdBy = Get(data, "created_by");
-        var createdByUserId = Get(data, "created_by_user_id");
-        var moderationAction = Get(data, "moderation_action");
-        var targetUserId = Get(data, "target_user_id");
-        var targetUserLogin = Get(data, "target_user_login");
-        var type = Get(data, "type");
+        var createdBy = data.GetPropertyString("created_by");
+        var createdByUserId = data.GetPropertyString("created_by_user_id");
+        var moderationAction = data.GetPropertyString("moderation_action");
+        var targetUserId = data.GetPropertyString("target_user_id");
+        var targetUserLogin = data.GetPropertyString("target_user_login");
 
         switch (moderationAction)
         {
@@ -234,7 +220,7 @@ public static class ActionParser
                     Action: moderationAction,
                     TargetId: targetUserId,
                     Target: targetUserLogin,
-                    Reason: NullIfEmpty(args[1]),
+                    Reason: args[1],
                     CreatedAt: createdAt.Value,
                     InitiatorId: createdByUserId,
                     Initiator: createdBy
@@ -392,7 +378,7 @@ public static class ActionParser
                     TargetId: targetUserId,
                     Target: targetUserLogin,
                     Duration: TimeSpan.FromSeconds(timeoutDuration),
-                    Reason: NullIfEmpty(args[2]),
+                    Reason: args[2],
                     CreatedAt: createdAt.Value,
                     InitiatorId: createdByUserId,
                     Initiator: createdBy);
@@ -419,12 +405,4 @@ public static class ActionParser
                 return false;
         }
     }
-
-    private static string? Get(JsonElement element, string propertyName)
-        => element.TryGetProperty(propertyName, out var property)
-            ? property.GetString()
-            : null;
-
-    private static string? NullIfEmpty(string value)
-        => value is {Length: > 0} ? value : null;
 }

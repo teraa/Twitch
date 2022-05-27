@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Xunit;
@@ -18,7 +19,7 @@ public class ChatModeratorActionsSampleRepository : IAsyncLifetime
         _samples = new Dictionary<string, string>();
     }
 
-    public IReadOnlyDictionary<string, string> Samples => _samples;
+    public JsonDocument GetJson(string sampleName) => JsonDocument.Parse(_samples[sampleName]);
 
     public async Task InitializeAsync()
     {

@@ -8,12 +8,17 @@ namespace Teraa.Twitch.PubSub;
 [PublicAPI]
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddPubSubService(this IServiceCollection services)
+    public static IServiceCollection AddPubSubService(this IServiceCollection services, Action<PubSubServiceOptions>? configureOptions = null)
     {
         services.TryAddTransient<IWsClient, WsClient>();
-        services.TryAddSingleton<PubSubServiceOptions>();
         services.TryAddSingleton<PubSubService>();
         services.AddHostedService(sp => sp.GetRequiredService<PubSubService>());
+
+        if (configureOptions is not null)
+        {
+            services.Configure(configureOptions);
+        }
+
         return services;
     }
 }

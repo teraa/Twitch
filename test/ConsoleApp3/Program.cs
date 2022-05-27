@@ -19,15 +19,13 @@ var services = new ServiceCollection()
         configure.AddSerilog();
     })
     .AddMediatR(typeof(Program))
-    .AddTmiService()
-    .Configure<TmiServiceOptions>(options =>
+    .AddTmiService(options =>
     {
         // options.Uri = new Uri("ws://localhost:5033/ws");
         options.PingInterval = TimeSpan.FromSeconds(10);
         options.MaxPongDelay = TimeSpan.FromSeconds(1);
     })
-    .AddPubSubService()
-    .Configure<PubSubServiceOptions>(options =>
+    .AddPubSubService(options =>
     {
         // options.Uri = new Uri("ws://localhost:5033/ws");
     })

@@ -282,7 +282,7 @@ public static class Parser
 
                 result = new Followers(
                     Action: moderationAction,
-                    Duration: TimeSpan.FromSeconds(followersDuration),
+                    Duration: TimeSpan.FromMinutes(followersDuration),
                     InitiatorId: createdByUserId,
                     Initiator: createdBy);
                 return true;

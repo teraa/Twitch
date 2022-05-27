@@ -186,7 +186,7 @@ public static class Parser
         return false;
     }
 
-    public static bool TryParseModeratorAction(JsonElement data, [NotNullWhen(true)] out IModeratorAction? result)
+    private static bool TryParseModeratorAction(JsonElement data, [NotNullWhen(true)] out IModeratorAction? result)
     {
         JsonElement e;
 

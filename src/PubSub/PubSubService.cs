@@ -159,7 +159,8 @@ public class PubSubService : WsService
                 break;
 
             default:
-                throw new NotImplementedException($"Unhandled topic: {topic.GetType()}");
+                await PublishAsync(new UnknownMessageReceived(topicString, message), cancellationToken);
+                break;
         }
     }
 

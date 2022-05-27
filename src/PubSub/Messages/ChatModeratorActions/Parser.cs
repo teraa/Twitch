@@ -364,6 +364,26 @@ public static class Parser
                     Initiator: createdBy);
                 return true;
 
+            case "r9kbeta" when
+                createdByUserId is { } &&
+                createdBy is { }:
+
+                result = new R9KBeta(
+                    Action: moderationAction,
+                    InitiatorId: createdByUserId,
+                    Initiator: createdBy);
+                return true;
+
+            case "r9kbetaoff" when
+                createdByUserId is { } &&
+                createdBy is { }:
+
+                result = new R9KBetaOff(
+                    Action: moderationAction,
+                    InitiatorId: createdByUserId,
+                    Initiator: createdBy);
+                return true;
+
             case "timeout" when
                 args is {Count: 3} &&
                 int.TryParse(args[1], out var timeoutDuration) &&

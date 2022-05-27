@@ -1,0 +1,17 @@
+{
+  "type": "moderation_action",
+  "data": {
+    "type": "chat_channel_moderation",
+    "moderation_action": "followers",
+    "args": [
+      "1440"
+    ],
+    "created_by": "initiator.login",
+    "created_by_user_id": "initiator.id",
+    "created_at": "",
+    "msg_id": "",
+    "target_user_id": "",
+    "target_user_login": "",
+    "from_automod": false
+  }
+}

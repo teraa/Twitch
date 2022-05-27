@@ -1,0 +1,11 @@
+{
+  "type": "moderator_added",
+  "data": {
+    "channel_id": "channel.id",
+    "target_user_id": "target.id",
+    "moderation_action": "mod",
+    "target_user_login": "target.login",
+    "created_by_user_id": "initiator.id",
+    "created_by": "initiator.login"
+  }
+}

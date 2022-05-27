@@ -1,0 +1,11 @@
+{
+  "type": "approve_unban_request",
+  "data": {
+    "moderation_action": "APPROVE_UNBAN_REQUEST",
+    "created_by_id": "initiator.id",
+    "created_by_login": "initiator.login",
+    "moderator_message": "approved response",
+    "target_user_id": "target.id",
+    "target_user_login": "target.login"
+  }
+}

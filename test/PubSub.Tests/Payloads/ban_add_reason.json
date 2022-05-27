@@ -1,0 +1,16 @@
+{
+  "type": "moderation_action",
+  "data": {
+    "args": [
+      "target.login",
+      "reason"
+    ],
+    "created_at": "2022-01-01T00:00:00Z",
+    "created_by": "initiator.login",
+    "created_by_user_id": "initiator.id",
+    "moderation_action": "ban",
+    "target_user_id": "target.id",
+    "target_user_login": "target.login",
+    "type": "chat_login_moderation"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "type": "moderation_action",
+  "data": {
+    "type": "chat_login_moderation",
+    "moderation_action": "automod_rejected",
+    "args": [
+      "<TARGET_LOGIN>",
+      "test phrase",
+      "identity"
+    ],
+    "created_by": "",
+    "created_by_user_id": "",
+    "msg_id": "<MESSAGE_ID>",
+    "target_user_id": "<TARGET_ID>",
+    "target_user_login": "<TARGET_LOGIN>",
+    "from_automod": false
+  }
+}

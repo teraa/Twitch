@@ -1,0 +1,14 @@
+{
+  "type": "channel_terms_action",
+  "data": {
+    "type": "add_permitted_term",
+    "id": "00000000-0000-0000-0000-000000000002",
+    "text": "permit phrase",
+    "requester_id": "initiator.id",
+    "requester_login": "initiator.login",
+    "channel_id": "channel.id",
+    "expires_at": "",
+    "updated_at": "2022-01-01T00:00:00Z",
+    "from_automod": false
+  }
+}

@@ -181,6 +181,20 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
     }
 
     [Fact]
+    public void Followers_Disable()
+    {
+        using var json = _repository.GetJson("followers_disable.json");
+        var success = Parser.TryParse(json, out var result);
+        Assert.True(success);
+        Assert.IsType<FollowersOff>(result);
+        var action = (FollowersOff)result!;
+
+        Assert.Equal("followersoff", action.Action);
+        Assert.Equal("initiator.id", action.InitiatorId);
+        Assert.Equal("initiator.login", action.Initiator);
+    }
+
+    [Fact]
     public void Followers_Enable_0()
     {
         using var json = _repository.GetJson("followers_enable_0.json");

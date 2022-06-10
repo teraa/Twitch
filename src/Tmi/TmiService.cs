@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Teraa.Irc;
+using Teraa.Irc.Parsing;
 using Teraa.Twitch.Tmi.Notifications;
 using Teraa.Twitch.Ws;
 
@@ -15,6 +16,8 @@ public class TmiServiceOptions : IWsServiceOptions
     public Uri Uri { get; set; } = new("wss://irc-ws.chat.twitch.tv:443");
 
     public Func<IServiceProvider, IPublisher> PublisherFactory { get; set; } = x => x.GetRequiredService<IPublisher>();
+
+    public IMessageParser MessageParser { get; set; } = new MessageParser();
 
     public TimeSpan PingInterval { get; set; } = TimeSpan.FromMinutes(4);
 
@@ -41,8 +44,8 @@ public sealed class TmiService : WsService
         _services = services;
     }
 
-    public void EnqueueMessage(Message message)
-        => EnqueueMessage(message.ToString());
+    public void EnqueueMessage(IMessage message)
+        => EnqueueMessage(message.ToString()!); // TODO: fix in upstream
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -51,10 +54,7 @@ public sealed class TmiService : WsService
             if (!IsReconnecting)
             {
                 var enqueuedAt = DateTimeOffset.UtcNow;
-                EnqueueMessage(new Message
-                {
-                    Command = Command.PING,
-                });
+                EnqueueMessage(new Message(Command.PING));
 
                 await Task.Delay(_options.MaxPongDelay, stoppingToken);
 
@@ -78,7 +78,7 @@ public sealed class TmiService : WsService
     {
         INotification notification;
 
-        if (Message.TryParse(rawMessage, out var message))
+        if (_options.MessageParser.TryParse(rawMessage, out var message))
         {
             switch (message)
             {
@@ -87,10 +87,7 @@ public sealed class TmiService : WsService
                     break;
 
                 case {Command: Command.PING}:
-                    EnqueueMessage(new Message
-                    {
-                        Command = Command.PONG,
-                    });
+                    EnqueueMessage(new Message(Command.PONG));
                     break;
 
                 case {Command: Command.PONG}:

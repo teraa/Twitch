@@ -15,7 +15,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Teraa.IrcMessageParser" Version="2.1.0-alpha.22" />
+      <PackageReference Include="Teraa.IrcMessageParser" Version="3.0.0-alpha.25" />
     </ItemGroup>
 
 </Project>

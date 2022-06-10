@@ -1,7 +1,9 @@
-﻿using MediatR;
+﻿using JetBrains.Annotations;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Teraa.Irc;
+using Teraa.Irc.Parsing;
 using Teraa.Twitch.PubSub;
 using Teraa.Twitch.PubSub.Payloads;
 using Teraa.Twitch.Tmi;
@@ -42,6 +44,7 @@ svc = services.GetRequiredService<TmiService>();
 
 await svc.StartAsync(default);
 
+var messageParser = new MessageParser();
 string? line;
 while ((line = Console.ReadLine()) is not null)
 {
@@ -58,7 +61,7 @@ while ((line = Console.ReadLine()) is not null)
         default:
             if (svc is TmiService tmi)
             {
-                if (!Message.TryParse(line, out var message))
+                if (!messageParser.TryParse(line, out var message))
                 {
                     Console.WriteLine("Invalid message format.");
                     continue;
@@ -76,6 +79,7 @@ while ((line = Console.ReadLine()) is not null)
 if (svc.IsStarted)
     await svc.StopAsync(default);
 
+[UsedImplicitly]
 public class MessageHandler : INotificationHandler<Teraa.Twitch.Tmi.Notifications.MessageReceived>
 {
     public Task Handle(Teraa.Twitch.Tmi.Notifications.MessageReceived received, CancellationToken cancellationToken)
@@ -87,6 +91,7 @@ public class MessageHandler : INotificationHandler<Teraa.Twitch.Tmi.Notification
     }
 }
 
+[UsedImplicitly]
 public class ConnectedHandler : INotificationHandler<Teraa.Twitch.Tmi.Notifications.Connected>
 {
     private readonly TmiService _tmi;
@@ -98,12 +103,13 @@ public class ConnectedHandler : INotificationHandler<Teraa.Twitch.Tmi.Notificati
 
     public Task Handle(Teraa.Twitch.Tmi.Notifications.Connected notification, CancellationToken cancellationToken)
     {
-        _tmi.EnqueueMessage(Message.Parse("nick justinfan1"));
+        _tmi.EnqueueMessage(new Message(Command.NICK, Content: new Content("justinfan1")));
 
         return Task.CompletedTask;
     }
 }
 
+[UsedImplicitly]
 public class PubSubConnectedHandler : INotificationHandler<Teraa.Twitch.PubSub.Notifications.Connected>
 {
     private readonly PubSubService _pubSub;

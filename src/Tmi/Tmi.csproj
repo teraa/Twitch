@@ -14,4 +14,8 @@
       <ProjectReference Include="..\Ws\Ws.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Teraa.IrcMessageParser" Version="2.1.0-alpha.22" />
+    </ItemGroup>
+
 </Project>

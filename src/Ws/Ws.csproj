@@ -17,7 +17,6 @@
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.1" />
       <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
       <PackageReference Include="System.IO.Pipelines" Version="6.0.2" />
-      <PackageReference Include="Teraa.IrcMessageParser" Version="2.1.0-alpha.22" />
     </ItemGroup>
 
 </Project>

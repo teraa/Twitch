@@ -45,7 +45,7 @@ public sealed class TmiService : WsService
     }
 
     public void EnqueueMessage(IMessage message)
-        => EnqueueMessage(message.ToString()!); // TODO: fix in upstream
+        => EnqueueMessage(_options.MessageParser.ToString(message));
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

@@ -33,5 +33,5 @@ try
 }
 catch (Exception ex)
 {
-
+    _ = ex;
 }

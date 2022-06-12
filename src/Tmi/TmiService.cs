@@ -17,7 +17,11 @@ public class TmiServiceOptions : IWsServiceOptions
 
     public Func<IServiceProvider, IPublisher> PublisherFactory { get; set; } = x => x.GetRequiredService<IPublisher>();
 
-    public IMessageParser MessageParser { get; set; } = new MessageParser();
+    public IMessageParser MessageParser { get; set; } = new MessageParser
+    {
+        CommandParser = new FastCommandParser(),
+        TagsParser = new LazyTagsParser(),
+    };
 
     public TimeSpan PingInterval { get; set; } = TimeSpan.FromMinutes(4);
 

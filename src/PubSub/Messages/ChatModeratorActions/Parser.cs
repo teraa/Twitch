@@ -260,6 +260,7 @@ public static class Parser
                 createdAt.HasValue &&
                 createdByUserId is { } &&
                 createdBy is { }:
+
                 result = new Delete(
                     Action: moderationAction,
                     TargetId: targetUserId,

@@ -46,6 +46,17 @@ public record Clear(
     string Initiator
 ) : IModeratorAction;
 
+public record Delete(
+    string Action,
+    string TargetId,
+    string Target,
+    DateTimeOffset CreatedAt,
+    string InitiatorId,
+    string Initiator,
+    string MessageId,
+    string Message
+) : ITargetedModeratorAction;
+
 public record EmoteOnly(
     string Action,
     string InitiatorId,

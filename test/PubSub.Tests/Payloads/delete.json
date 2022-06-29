@@ -1,0 +1,19 @@
+{
+  "type": "moderation_action",
+  "data": {
+    "type": "chat_login_moderation",
+    "moderation_action": "delete",
+    "args": [
+      "target.login",
+      "message",
+      "00000000-0000-0000-0000-000000000003"
+    ],
+    "created_by": "initiator.login",
+    "created_by_user_id": "initiator.id",
+    "created_at": "2022-06-29T14:00:00Z",
+    "msg_id": "",
+    "target_user_id": "target.id",
+    "target_user_login": "",
+    "from_automod": false
+  }
+}

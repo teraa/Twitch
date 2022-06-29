@@ -254,6 +254,23 @@ public static class Parser
                     Initiator: createdBy);
                 return true;
 
+            case "delete" when
+                targetUserId is { } &&
+                args is {Count: 3} &&
+                createdAt.HasValue &&
+                createdByUserId is { } &&
+                createdBy is { }:
+                result = new Delete(
+                    Action: moderationAction,
+                    TargetId: targetUserId,
+                    Target: args[0],
+                    CreatedAt: createdAt.Value,
+                    InitiatorId: createdByUserId,
+                    Initiator: createdBy,
+                    MessageId: args[2],
+                    Message: args[1]);
+                return true;
+
             case "emoteonly" when
                 createdByUserId is { } &&
                 createdBy is { }:

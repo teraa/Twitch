@@ -153,6 +153,25 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
     }
 
     [Fact]
+    public void Delete()
+    {
+        using var json = _repository.GetJson("delete.json");
+        var success = Parser.TryParse(json, out var result);
+        Assert.True(success);
+        Assert.IsType<Delete>(result);
+        var action = (Delete)result!;
+
+        Assert.Equal("delete", action.Action);
+        Assert.Equal("target.id", action.TargetId);
+        Assert.Equal("target.login", action.Target);
+        Assert.Equal(new DateTimeOffset(2022, 6, 29, 14, 0, 0, TimeSpan.Zero), action.CreatedAt);
+        Assert.Equal("initiator.id", action.InitiatorId);
+        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("00000000-0000-0000-0000-000000000003", action.MessageId);
+        Assert.Equal("message", action.Message);
+    }
+
+    [Fact]
     public void Emoteonly_Enable()
     {
         using var json = _repository.GetJson("emoteonly_enable.json");

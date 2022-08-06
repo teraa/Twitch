@@ -1,7 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
-    <Import Project="../../Twitch.targets" />
-
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>

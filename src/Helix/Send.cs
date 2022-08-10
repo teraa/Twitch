@@ -15,7 +15,6 @@ public static class Send
         string Path,
         Action<QueryBuilder>? QueryBuilderOptions,
         string Token,
-        string ClientId,
         Action<HttpRequestMessage>? RequestOptions
     ) : IRequest<TResponse>;
 
@@ -23,10 +22,12 @@ public static class Send
         where TRequest : Request<TResponse>
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly HelixServiceOptions _options;
 
-        public Handler(IHttpClientFactory httpClientFactory)
+        public Handler(IHttpClientFactory httpClientFactory, HelixServiceOptions options)
         {
             _httpClientFactory = httpClientFactory;
+            _options = options;
         }
 
         public async Task<TResponse> Handle(TRequest request, CancellationToken cancellationToken)
@@ -43,7 +44,7 @@ public static class Send
 
             using var httpRequest = new HttpRequestMessage(request.HttpMethod, uriBuilder.Uri);
             httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", request.Token);
-            httpRequest.Headers.Add("Client-Id", request.ClientId);
+            httpRequest.Headers.Add("Client-Id", _options.ClientId);
             request.RequestOptions?.Invoke(httpRequest);
 
             using var httpResponse = await httpClient.SendAsync(httpRequest, cancellationToken);

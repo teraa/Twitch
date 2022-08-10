@@ -2,7 +2,6 @@
 using FluentValidation;
 using JetBrains.Annotations;
 using MediatR;
-using Microsoft.Extensions.Options;
 
 namespace Teraa.Twitch.Helix.Users;
 
@@ -59,13 +58,11 @@ public static class Get
     [UsedImplicitly]
     public class Handler : IRequestHandler<Query, Response>
     {
-        private readonly HelixServiceOptions _options;
         private readonly IMediator _mediator;
 
-        public Handler(IOptions<HelixServiceOptions> options, IMediator mediator)
+        public Handler(IMediator mediator)
         {
             _mediator = mediator;
-            _options = options.Value;
         }
 
         public async Task<Response> Handle(Query request, CancellationToken cancellationToken)
@@ -82,7 +79,6 @@ public static class Get
                         queryBuilder.Add("login", request.Logins);
                 },
                 Token: request.Token,
-                ClientId: _options.ClientId,
                 RequestOptions: null
             ), cancellationToken);
 

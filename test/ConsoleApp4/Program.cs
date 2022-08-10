@@ -1,8 +1,7 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-using MediatR;
+﻿using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using Teraa.Twitch.Helix;
 using Teraa.Twitch.Helix.Users;
@@ -36,4 +35,5 @@ using var scope = services.CreateScope();
 var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 var response = await mediator.Send(new Get.Query(Token: config["Twitch:Token"], Logins: new[] {"tera_"}));
 
-_ = response;
+var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+logger.LogInformation("{@Data}", response.Data);

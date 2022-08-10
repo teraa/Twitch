@@ -73,16 +73,13 @@ public static class Get
             var response = await _mediator.Send(new Send.Request<Response>(
                 HttpMethod: HttpMethod.Get,
                 Path: "users",
-                UriOptions: uriBuilder =>
+                QueryBuilderOptions: queryBuilder =>
                 {
-                    var queryParams = new List<string>();
+                    if (request.Ids is { })
+                        queryBuilder.Add("id", request.Ids);
 
-                    if (request.Ids is {} ids)
-                        queryParams.AddRange(ids.Select(x => $"id={Uri.EscapeDataString(x)}"));
-                    if (request.Logins is {} logins)
-                        queryParams.AddRange(logins.Select(x => $"login={Uri.EscapeDataString(x)}"));
-
-                    uriBuilder.Query = string.Join('&', queryParams);
+                    if (request.Logins is { })
+                        queryBuilder.Add("login", request.Logins);
                 },
                 Token: request.Token,
                 ClientId: _options.ClientId,

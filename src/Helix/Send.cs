@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using JetBrains.Annotations;
 using MediatR;
+using Microsoft.AspNetCore.Http.Extensions;
 
 namespace Teraa.Twitch.Helix;
 
@@ -12,7 +13,7 @@ public static class Send
     public record Request<TResponse>(
         HttpMethod HttpMethod,
         string Path,
-        Action<UriBuilder>? UriOptions,
+        Action<QueryBuilder>? QueryBuilderOptions,
         string Token,
         string ClientId,
         Action<HttpRequestMessage>? RequestOptions
@@ -31,10 +32,14 @@ public static class Send
         public async Task<TResponse> Handle(TRequest request, CancellationToken cancellationToken)
         {
             var httpClient = _httpClientFactory.CreateClient("Helix");
+            var uriBuilder = new UriBuilder(new Uri(httpClient.BaseAddress!, request.Path));
 
-            var uri = new Uri(httpClient.BaseAddress!, request.Path); // TODO: !
-            var uriBuilder = new UriBuilder(uri);
-            request.UriOptions?.Invoke(uriBuilder);
+            if (request.QueryBuilderOptions is { })
+            {
+                var queryBuilder = new QueryBuilder();
+                request.QueryBuilderOptions(queryBuilder);
+                uriBuilder.Query = queryBuilder.ToString();
+            }
 
             using var httpRequest = new HttpRequestMessage(request.HttpMethod, uriBuilder.Uri);
             httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", request.Token);

@@ -34,11 +34,11 @@ public static class Parser
         switch (type)
         {
             case "approve_unban_request" when
-                targetUserId is { } &&
-                targetUserLogin is { } &&
-                moderatorMessage is { } &&
-                createdById is { } &&
-                createdByLogin is { }:
+                targetUserId is not null &&
+                targetUserLogin is not null &&
+                moderatorMessage is not null &&
+                createdById is not null &&
+                createdByLogin is not null:
 
                 result = new ApproveUnbanRequest(
                     Action: type,
@@ -52,11 +52,11 @@ public static class Parser
                 return true;
 
             case "deny_unban_request" when
-                targetUserId is { } &&
-                targetUserLogin is { } &&
-                moderatorMessage is { } &&
-                createdById is { } &&
-                createdByLogin is { }:
+                targetUserId is not null &&
+                targetUserLogin is not null &&
+                moderatorMessage is not null &&
+                createdById is not null &&
+                createdByLogin is not null:
 
                 result = new DenyUnbanRequest(
                     Action: type,
@@ -70,12 +70,12 @@ public static class Parser
                 return true;
 
             case "moderator_added" when
-                moderationAction is { } &&
-                targetUserId is { } &&
-                targetUserLogin is { } &&
-                createdByUserId is { } &&
-                createdBy is { } &&
-                channelId is { }:
+                moderationAction is not null &&
+                targetUserId is not null &&
+                targetUserLogin is not null &&
+                createdByUserId is not null &&
+                createdBy is not null &&
+                channelId is not null:
 
                 result = new Mod(
                     Action: moderationAction,
@@ -89,12 +89,12 @@ public static class Parser
                 return true;
 
             case "moderator_removed" when
-                moderationAction is { } &&
-                targetUserId is { } &&
-                targetUserLogin is { } &&
-                createdByUserId is { } &&
-                createdBy is { } &&
-                channelId is { }:
+                moderationAction is not null &&
+                targetUserId is not null &&
+                targetUserLogin is not null &&
+                createdByUserId is not null &&
+                createdBy is not null &&
+                channelId is not null:
 
                 result = new Unmod(
                     Action: moderationAction,
@@ -108,11 +108,11 @@ public static class Parser
                 return true;
 
             case "vip_added" when
-                targetUserId is { } &&
-                targetUserLogin is { } &&
-                createdByUserId is { } &&
-                createdBy is { } &&
-                channelId is { }:
+                targetUserId is not null &&
+                targetUserLogin is not null &&
+                createdByUserId is not null &&
+                createdBy is not null &&
+                channelId is not null:
 
                 result = new Vip(
                     Action: type,
@@ -224,11 +224,11 @@ public static class Parser
         {
             case "ban" when
                 args is {Count: 2} &&
-                targetUserId is { } &&
-                targetUserLogin is { } &&
+                targetUserId is not null &&
+                targetUserLogin is not null &&
                 createdAt.HasValue &&
-                createdByUserId is { } &&
-                createdBy is { }:
+                createdByUserId is not null &&
+                createdBy is not null:
 
                 result = new Ban(
                     Action: moderationAction,
@@ -244,11 +244,11 @@ public static class Parser
                 return true;
 
             case "unban" when
-                targetUserId is { } &&
-                targetUserLogin is { } &&
+                targetUserId is not null &&
+                targetUserLogin is not null &&
                 createdAt.HasValue &&
-                createdByUserId is { } &&
-                createdBy is { }:
+                createdByUserId is not null &&
+                createdBy is not null:
 
                 result = new Unban(
                     Action: moderationAction,
@@ -263,8 +263,8 @@ public static class Parser
                 return true;
 
             case "clear" when
-                createdByUserId is { } &&
-                createdBy is { }:
+                createdByUserId is not null &&
+                createdBy is not null:
 
                 result = new Clear(
                     Action: moderationAction,
@@ -274,11 +274,11 @@ public static class Parser
                 return true;
 
             case "delete" when
-                targetUserId is { } &&
+                targetUserId is not null &&
                 args is {Count: 3} &&
                 createdAt.HasValue &&
-                createdByUserId is { } &&
-                createdBy is { }:
+                createdByUserId is not null &&
+                createdBy is not null:
 
                 result = new Delete(
                     Action: moderationAction,
@@ -294,8 +294,8 @@ public static class Parser
                 return true;
 
             case "emoteonly" when
-                createdByUserId is { } &&
-                createdBy is { }:
+                createdByUserId is not null &&
+                createdBy is not null:
 
                 result = new EmoteOnly(
                     Action: moderationAction,
@@ -305,8 +305,8 @@ public static class Parser
                 return true;
 
             case "emoteonlyoff" when
-                createdByUserId is { } &&
-                createdBy is { }:
+                createdByUserId is not null &&
+                createdBy is not null:
 
                 result = new EmoteOnlyOff(
                     Action: moderationAction,
@@ -318,8 +318,8 @@ public static class Parser
             case "followers" when
                 args is {Count: 1} &&
                 int.TryParse(args[0], out var followersDuration) &&
-                createdByUserId is { } &&
-                createdBy is { }:
+                createdByUserId is not null &&
+                createdBy is not null:
 
                 result = new Followers(
                     Action: moderationAction,
@@ -330,8 +330,8 @@ public static class Parser
                 return true;
 
             case "followersoff" when
-                createdByUserId is { } &&
-                createdBy is { }:
+                createdByUserId is not null &&
+                createdBy is not null:
 
                 result = new FollowersOff(
                     Action: moderationAction,
@@ -344,8 +344,8 @@ public static class Parser
 
             case "raid" when
                 args is {Count: 1} &&
-                createdByUserId is { } &&
-                createdBy is { }:
+                createdByUserId is not null &&
+                createdBy is not null:
 
                 result = new Raid(
                     Action: moderationAction,
@@ -355,8 +355,8 @@ public static class Parser
                 return true;
 
             case "unraid" when
-                createdByUserId is { } &&
-                createdBy is { }:
+                createdByUserId is not null &&
+                createdBy is not null:
 
                 result = new Unraid(
                     Action: moderationAction,
@@ -367,8 +367,8 @@ public static class Parser
             case "slow" when
                 args is {Count: 1} &&
                 int.TryParse(args[0], out var followersDuration) &&
-                createdByUserId is { } &&
-                createdBy is { }:
+                createdByUserId is not null &&
+                createdBy is not null:
 
                 result = new Slow(
                     Action: moderationAction,
@@ -379,8 +379,8 @@ public static class Parser
                 return true;
 
             case "slowoff" when
-                createdByUserId is { } &&
-                createdBy is { }:
+                createdByUserId is not null &&
+                createdBy is not null:
 
                 result = new SlowOff(
                     Action: moderationAction,
@@ -390,8 +390,8 @@ public static class Parser
                 return true;
 
             case "subscribers" when
-                createdByUserId is { } &&
-                createdBy is { }:
+                createdByUserId is not null &&
+                createdBy is not null:
 
                 result = new Subscribers(
                     Action: moderationAction,
@@ -401,8 +401,8 @@ public static class Parser
                 return true;
 
             case "subscribersoff" when
-                createdByUserId is { } &&
-                createdBy is { }:
+                createdByUserId is not null &&
+                createdBy is not null:
 
                 result = new SubscribersOff(
                     Action: moderationAction,
@@ -412,8 +412,8 @@ public static class Parser
                 return true;
 
             case "r9kbeta" when
-                createdByUserId is { } &&
-                createdBy is { }:
+                createdByUserId is not null &&
+                createdBy is not null:
 
                 result = new R9KBeta(
                     Action: moderationAction,
@@ -423,8 +423,8 @@ public static class Parser
                 return true;
 
             case "r9kbetaoff" when
-                createdByUserId is { } &&
-                createdBy is { }:
+                createdByUserId is not null &&
+                createdBy is not null:
 
                 result = new R9KBetaOff(
                     Action: moderationAction,
@@ -436,11 +436,11 @@ public static class Parser
             case "timeout" when
                 args is {Count: 3} &&
                 int.TryParse(args[1], out var timeoutDuration) &&
-                targetUserId is { } &&
-                targetUserLogin is { } &&
+                targetUserId is not null &&
+                targetUserLogin is not null &&
                 createdAt.HasValue &&
-                createdByUserId is { } &&
-                createdBy is { }:
+                createdByUserId is not null &&
+                createdBy is not null:
 
                 result = new Timeout(
                     Action: moderationAction,
@@ -456,11 +456,11 @@ public static class Parser
                 return true;
 
             case "untimeout" when
-                targetUserId is { } &&
-                targetUserLogin is { } &&
+                targetUserId is not null &&
+                targetUserLogin is not null &&
                 createdAt.HasValue &&
-                createdByUserId is { } &&
-                createdBy is { }:
+                createdByUserId is not null &&
+                createdBy is not null:
 
                 result = new Untimeout(
                     Action: moderationAction,

@@ -72,10 +72,10 @@ public static class Get
                 Path: "users",
                 QueryBuilderOptions: queryBuilder =>
                 {
-                    if (request.Ids is { })
+                    if (request.Ids is not null)
                         queryBuilder.Add("id", request.Ids);
 
-                    if (request.Logins is { })
+                    if (request.Logins is not null)
                         queryBuilder.Add("login", request.Logins);
                 },
                 Token: request.Token,

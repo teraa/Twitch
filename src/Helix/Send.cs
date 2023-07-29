@@ -35,7 +35,7 @@ public static class Send
             var httpClient = _httpClientFactory.CreateClient("Helix");
             var uriBuilder = new UriBuilder(new Uri(httpClient.BaseAddress!, request.Path));
 
-            if (request.QueryBuilderOptions is { })
+            if (request.QueryBuilderOptions is not null)
             {
                 var queryBuilder = new QueryBuilder();
                 request.QueryBuilderOptions(queryBuilder);

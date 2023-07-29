@@ -6,10 +6,16 @@ public interface IModeratorAction : IMessage
     string InitiatorId { get; }
 }
 
+public interface IInitiatorModeratorAction : IModeratorAction
+{
+    User Initiator { get; }
+
+    string IModeratorAction.InitiatorId => Initiator.Id;
+}
+
 public interface ITargetedModeratorAction : IModeratorAction
 {
-    string TargetId { get; }
-    string TargetLogin { get; }
+    User Target { get; }
 }
 
 public interface ITermModeratorAction : IModeratorAction
@@ -20,66 +26,60 @@ public interface ITermModeratorAction : IModeratorAction
     string ChannelId { get; }
 }
 
+public record User(
+    string Id,
+    string Login
+);
+
 public record Ban(
     string Action,
-    string TargetId,
-    string TargetLogin,
+    User Target,
     string Reason,
     DateTimeOffset CreatedAt,
-    string InitiatorId,
-    string InitiatorLogin
-) : ITargetedModeratorAction;
+    User Initiator
+) : IInitiatorModeratorAction, ITargetedModeratorAction;
 
 public record Unban(
     string Action,
-    string TargetId,
-    string TargetLogin,
+    User Target,
     DateTimeOffset CreatedAt,
-    string InitiatorId,
-    string InitiatorLogin
-) : ITargetedModeratorAction;
+    User Initiator
+) : IInitiatorModeratorAction, ITargetedModeratorAction;
 
 public record Clear(
     string Action,
-    string InitiatorId,
-    string InitiatorLogin
-) : IModeratorAction;
+    User Initiator
+) : IInitiatorModeratorAction;
 
 public record Delete(
     string Action,
-    string TargetId,
-    string TargetLogin,
+    User Target,
     DateTimeOffset CreatedAt,
-    string InitiatorId,
-    string InitiatorLogin,
+    User Initiator,
     string MessageId,
     string Message
-) : ITargetedModeratorAction;
+) : IInitiatorModeratorAction, ITargetedModeratorAction;
 
 public record EmoteOnly(
     string Action,
-    string InitiatorId,
-    string InitiatorLogin
-) : IModeratorAction;
+    User Initiator
+) : IInitiatorModeratorAction;
 
 public record EmoteOnlyOff(
     string Action,
-    string InitiatorId,
-    string InitiatorLogin
-) : IModeratorAction;
+    User Initiator
+) : IInitiatorModeratorAction;
 
 public record Followers(
     string Action,
     TimeSpan Duration,
-    string InitiatorId,
-    string InitiatorLogin
-) : IModeratorAction;
+    User Initiator
+) : IInitiatorModeratorAction;
 
 public record FollowersOff(
     string Action,
-    string InitiatorId,
-    string InitiatorLogin
-) : IModeratorAction;
+    User Initiator
+) : IInitiatorModeratorAction;
 
 public record Raid(
     string Action,
@@ -97,108 +97,88 @@ public record Unraid(
 public record Slow(
     string Action,
     TimeSpan Duration,
-    string InitiatorId,
-    string InitiatorLogin
-) : IModeratorAction;
+    User Initiator
+) : IInitiatorModeratorAction;
 
 public record SlowOff(
     string Action,
-    string InitiatorId,
-    string InitiatorLogin
-) : IModeratorAction;
+    User Initiator
+) : IInitiatorModeratorAction;
 
 public record Subscribers(
     string Action,
-    string InitiatorId,
-    string InitiatorLogin
-) : IModeratorAction;
+    User Initiator
+) : IInitiatorModeratorAction;
 
 public record SubscribersOff(
     string Action,
-    string InitiatorId,
-    string InitiatorLogin
-) : IModeratorAction;
+    User Initiator
+) : IInitiatorModeratorAction;
 
 public record R9KBeta(
     string Action,
-    string InitiatorId,
-    string InitiatorLogin
-) : IModeratorAction;
+    User Initiator
+) : IInitiatorModeratorAction;
 
 public record R9KBetaOff(
     string Action,
-    string InitiatorId,
-    string InitiatorLogin
-) : IModeratorAction;
+    User Initiator
+) : IInitiatorModeratorAction;
 
 public record Timeout(
     string Action,
-    string TargetId,
-    string TargetLogin,
+    User Target,
     TimeSpan Duration,
     string Reason,
     DateTimeOffset CreatedAt,
-    string InitiatorId,
-    string InitiatorLogin
-) : ITargetedModeratorAction;
+    User Initiator
+) : IInitiatorModeratorAction, ITargetedModeratorAction;
 
 public record Untimeout(
     string Action,
-    string TargetId,
-    string TargetLogin,
+    User Target,
     DateTimeOffset CreatedAt,
-    string InitiatorId,
-    string InitiatorLogin
-) : ITargetedModeratorAction;
+    User Initiator
+) : IInitiatorModeratorAction, ITargetedModeratorAction;
 
 // -----------------
 
 public record Mod(
     string Action,
-    string TargetId,
-    string TargetLogin,
-    string InitiatorId,
-    string InitiatorLogin,
+    User Target,
+    User Initiator,
     string ChannelId
-) : ITargetedModeratorAction;
+) : IInitiatorModeratorAction, ITargetedModeratorAction;
 
 public record Unmod(
     string Action,
-    string TargetId,
-    string TargetLogin,
-    string InitiatorId,
-    string InitiatorLogin,
+    User Target,
+    User Initiator,
     string ChannelId
-) : ITargetedModeratorAction;
+) : IInitiatorModeratorAction, ITargetedModeratorAction;
 
 public record Vip(
     string Action,
-    string TargetId,
-    string TargetLogin,
-    string InitiatorId,
-    string InitiatorLogin,
+    User Target,
+    User Initiator,
     string ChannelId
-) : ITargetedModeratorAction;
+) : IInitiatorModeratorAction, ITargetedModeratorAction;
 
 // -----------------
 
 public record ApproveUnbanRequest(
     string Action,
-    string TargetId,
-    string TargetLogin,
+    User Target,
     string ModeratorMessage,
-    string InitiatorId,
-    string InitiatorLogin
-) : ITargetedModeratorAction;
+    User Initiator
+) : IInitiatorModeratorAction, ITargetedModeratorAction;
 
 public record DenyUnbanRequest(
     string Action,
-    string TargetId,
-    string TargetLogin,
+    User Target,
     string ModeratorMessage,
-    string InitiatorId,
-    string InitiatorLogin
-) : ITargetedModeratorAction;
+    User Initiator
+) : IInitiatorModeratorAction, ITargetedModeratorAction;
 
 // -----------------
 
@@ -206,38 +186,34 @@ public record AddBlockedTerm(
     string Action,
     string Id,
     string Text,
-    string InitiatorId,
-    string InitiatorLogin,
+    User Initiator,
     string ChannelId,
     DateTimeOffset UpdatedAt
-) : ITermModeratorAction;
+) : IInitiatorModeratorAction, ITermModeratorAction;
 
 public record DeleteBlockedTerm(
     string Action,
     string Id,
     string Text,
-    string InitiatorId,
-    string InitiatorLogin,
+    User Initiator,
     string ChannelId,
     DateTimeOffset UpdatedAt
-) : ITermModeratorAction;
+) : IInitiatorModeratorAction, ITermModeratorAction;
 
 public record AddPermittedTerm(
     string Action,
     string Id,
     string Text,
-    string InitiatorId,
-    string InitiatorLogin,
+    User Initiator,
     string ChannelId,
     DateTimeOffset UpdatedAt
-) : ITermModeratorAction;
+) : IInitiatorModeratorAction, ITermModeratorAction;
 
 public record DeletePermittedTerm(
     string Action,
     string Id,
     string Text,
-    string InitiatorId,
-    string InitiatorLogin,
+    User Initiator,
     string ChannelId,
     DateTimeOffset UpdatedAt
-) : ITermModeratorAction;
+) : IInitiatorModeratorAction, ITermModeratorAction;

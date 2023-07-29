@@ -42,11 +42,13 @@ public static class Parser
 
                 result = new ApproveUnbanRequest(
                     Action: type,
-                    TargetId: targetUserId,
-                    TargetLogin: targetUserLogin,
+                    Target: new User(
+                        Id: targetUserId,
+                        Login: targetUserLogin),
                     ModeratorMessage: moderatorMessage,
-                    InitiatorId: createdById,
-                    InitiatorLogin: createdByLogin);
+                    Initiator: new User(
+                        Id: createdById,
+                        Login: createdByLogin));
                 return true;
 
             case "deny_unban_request" when
@@ -58,11 +60,13 @@ public static class Parser
 
                 result = new DenyUnbanRequest(
                     Action: type,
-                    TargetId: targetUserId,
-                    TargetLogin: targetUserLogin,
+                    Target: new User(
+                        Id: targetUserId,
+                        Login: targetUserLogin),
                     ModeratorMessage: moderatorMessage,
-                    InitiatorId: createdById,
-                    InitiatorLogin: createdByLogin);
+                    Initiator: new User(
+                        Id: createdById,
+                        Login: createdByLogin));
                 return true;
 
             case "moderator_added" when
@@ -75,10 +79,12 @@ public static class Parser
 
                 result = new Mod(
                     Action: moderationAction,
-                    TargetId: targetUserId,
-                    TargetLogin: targetUserLogin,
-                    InitiatorId: createdByUserId,
-                    InitiatorLogin: createdBy,
+                    Target: new User(
+                        Id: targetUserId,
+                        Login: targetUserLogin),
+                    Initiator: new User(
+                        Id: createdByUserId,
+                        Login: createdBy),
                     ChannelId: channelId);
                 return true;
 
@@ -92,10 +98,12 @@ public static class Parser
 
                 result = new Unmod(
                     Action: moderationAction,
-                    TargetId: targetUserId,
-                    TargetLogin: targetUserLogin,
-                    InitiatorId: createdByUserId,
-                    InitiatorLogin: createdBy,
+                    Target: new User(
+                        Id: targetUserId,
+                        Login: targetUserLogin),
+                    Initiator: new User(
+                        Id: createdByUserId,
+                        Login: createdBy),
                     ChannelId: channelId);
                 return true;
 
@@ -108,10 +116,12 @@ public static class Parser
 
                 result = new Vip(
                     Action: type,
-                    TargetId: targetUserId,
-                    TargetLogin: targetUserLogin,
-                    InitiatorId: createdByUserId,
-                    InitiatorLogin: createdBy,
+                    Target: new User(
+                        Id: targetUserId,
+                        Login: targetUserLogin),
+                    Initiator: new User(
+                        Id: createdByUserId,
+                        Login: createdBy),
                     ChannelId: channelId);
                 return true;
 
@@ -138,8 +148,9 @@ public static class Parser
                             Action: innerType,
                             Id: id,
                             Text: text,
-                            InitiatorId: requesterId,
-                            InitiatorLogin: requesterLogin,
+                            Initiator: new User(
+                                Id: requesterId,
+                                Login: requesterLogin),
                             ChannelId: channelId,
                             UpdatedAt: updatedAt);
                         return true;
@@ -149,8 +160,9 @@ public static class Parser
                             Action: innerType,
                             Id: id,
                             Text: text,
-                            InitiatorId: requesterId,
-                            InitiatorLogin: requesterLogin,
+                            Initiator: new User(
+                                Id: requesterId,
+                                Login: requesterLogin),
                             ChannelId: channelId,
                             UpdatedAt: updatedAt);
                         return true;
@@ -160,8 +172,9 @@ public static class Parser
                             Action: innerType,
                             Id: id,
                             Text: text,
-                            InitiatorId: requesterId,
-                            InitiatorLogin: requesterLogin,
+                            Initiator: new User(
+                                Id: requesterId,
+                                Login: requesterLogin),
                             ChannelId: channelId,
                             UpdatedAt: updatedAt);
                         return true;
@@ -171,8 +184,9 @@ public static class Parser
                             Action: innerType,
                             Id: id,
                             Text: text,
-                            InitiatorId: requesterId,
-                            InitiatorLogin: requesterLogin,
+                            Initiator: new User(
+                                Id: requesterId,
+                                Login: requesterLogin),
                             ChannelId: channelId,
                             UpdatedAt: updatedAt);
                         return true;
@@ -218,13 +232,15 @@ public static class Parser
 
                 result = new Ban(
                     Action: moderationAction,
-                    TargetId: targetUserId,
-                    TargetLogin: targetUserLogin,
+                    Target: new User(
+                        Id: targetUserId,
+                        Login: targetUserLogin),
                     Reason: args[1],
                     CreatedAt: createdAt.Value,
-                    InitiatorId: createdByUserId,
-                    InitiatorLogin: createdBy
-                );
+                    Initiator: new User(
+                        Id: createdByUserId,
+                        Login: createdBy
+                ));
                 return true;
 
             case "unban" when
@@ -236,12 +252,14 @@ public static class Parser
 
                 result = new Unban(
                     Action: moderationAction,
-                    TargetId: targetUserId,
-                    TargetLogin: targetUserLogin,
+                    Target: new User(
+                        Id: targetUserId,
+                        Login: targetUserLogin),
                     CreatedAt: createdAt.Value,
-                    InitiatorId: createdByUserId,
-                    InitiatorLogin: createdBy
-                );
+                    Initiator: new User(
+                        Id: createdByUserId,
+                        Login: createdBy
+                ));
                 return true;
 
             case "clear" when
@@ -250,8 +268,9 @@ public static class Parser
 
                 result = new Clear(
                     Action: moderationAction,
-                    InitiatorId: createdByUserId,
-                    InitiatorLogin: createdBy);
+                    Initiator: new User(
+                        Id: createdByUserId,
+                        Login: createdBy));
                 return true;
 
             case "delete" when
@@ -263,11 +282,13 @@ public static class Parser
 
                 result = new Delete(
                     Action: moderationAction,
-                    TargetId: targetUserId,
-                    TargetLogin: args[0],
+                    Target: new User(
+                        Id: targetUserId,
+                        Login: args[0]),
                     CreatedAt: createdAt.Value,
-                    InitiatorId: createdByUserId,
-                    InitiatorLogin: createdBy,
+                    Initiator: new User(
+                        Id: createdByUserId,
+                        Login: createdBy),
                     MessageId: args[2],
                     Message: args[1]);
                 return true;
@@ -278,8 +299,9 @@ public static class Parser
 
                 result = new EmoteOnly(
                     Action: moderationAction,
-                    InitiatorId: createdByUserId,
-                    InitiatorLogin: createdBy);
+                    Initiator: new User(
+                        Id: createdByUserId,
+                        Login: createdBy));
                 return true;
 
             case "emoteonlyoff" when
@@ -288,8 +310,9 @@ public static class Parser
 
                 result = new EmoteOnlyOff(
                     Action: moderationAction,
-                    InitiatorId: createdByUserId,
-                    InitiatorLogin: createdBy);
+                    Initiator: new User(
+                        Id: createdByUserId,
+                        Login: createdBy));
                 return true;
 
             case "followers" when
@@ -301,8 +324,9 @@ public static class Parser
                 result = new Followers(
                     Action: moderationAction,
                     Duration: TimeSpan.FromMinutes(followersDuration),
-                    InitiatorId: createdByUserId,
-                    InitiatorLogin: createdBy);
+                    Initiator: new User(
+                        Id: createdByUserId,
+                        Login: createdBy));
                 return true;
 
             case "followersoff" when
@@ -311,8 +335,9 @@ public static class Parser
 
                 result = new FollowersOff(
                     Action: moderationAction,
-                    InitiatorId: createdByUserId,
-                    InitiatorLogin: createdBy);
+                    Initiator: new User(
+                        Id: createdByUserId,
+                        Login: createdBy));
                 return true;
 
             // TODO: automod_rejected
@@ -348,8 +373,9 @@ public static class Parser
                 result = new Slow(
                     Action: moderationAction,
                     Duration: TimeSpan.FromSeconds(followersDuration),
-                    InitiatorId: createdByUserId,
-                    InitiatorLogin: createdBy);
+                    Initiator: new User(
+                        Id: createdByUserId,
+                        Login: createdBy));
                 return true;
 
             case "slowoff" when
@@ -358,8 +384,9 @@ public static class Parser
 
                 result = new SlowOff(
                     Action: moderationAction,
-                    InitiatorId: createdByUserId,
-                    InitiatorLogin: createdBy);
+                    Initiator: new User(
+                        Id: createdByUserId,
+                        Login: createdBy));
                 return true;
 
             case "subscribers" when
@@ -368,8 +395,9 @@ public static class Parser
 
                 result = new Subscribers(
                     Action: moderationAction,
-                    InitiatorId: createdByUserId,
-                    InitiatorLogin: createdBy);
+                    Initiator: new User(
+                        Id: createdByUserId,
+                        Login: createdBy));
                 return true;
 
             case "subscribersoff" when
@@ -378,8 +406,9 @@ public static class Parser
 
                 result = new SubscribersOff(
                     Action: moderationAction,
-                    InitiatorId: createdByUserId,
-                    InitiatorLogin: createdBy);
+                    Initiator: new User(
+                        Id: createdByUserId,
+                        Login: createdBy));
                 return true;
 
             case "r9kbeta" when
@@ -388,8 +417,9 @@ public static class Parser
 
                 result = new R9KBeta(
                     Action: moderationAction,
-                    InitiatorId: createdByUserId,
-                    InitiatorLogin: createdBy);
+                    Initiator: new User(
+                        Id: createdByUserId,
+                        Login: createdBy));
                 return true;
 
             case "r9kbetaoff" when
@@ -398,8 +428,9 @@ public static class Parser
 
                 result = new R9KBetaOff(
                     Action: moderationAction,
-                    InitiatorId: createdByUserId,
-                    InitiatorLogin: createdBy);
+                    Initiator: new User(
+                        Id: createdByUserId,
+                        Login: createdBy));
                 return true;
 
             case "timeout" when
@@ -413,13 +444,15 @@ public static class Parser
 
                 result = new Timeout(
                     Action: moderationAction,
-                    TargetId: targetUserId,
-                    TargetLogin: targetUserLogin,
+                    Target: new User(
+                        Id: targetUserId,
+                        Login: targetUserLogin),
                     Duration: TimeSpan.FromSeconds(timeoutDuration),
                     Reason: args[2],
                     CreatedAt: createdAt.Value,
-                    InitiatorId: createdByUserId,
-                    InitiatorLogin: createdBy);
+                    Initiator: new User(
+                        Id: createdByUserId,
+                        Login: createdBy));
                 return true;
 
             case "untimeout" when
@@ -431,11 +464,13 @@ public static class Parser
 
                 result = new Untimeout(
                     Action: moderationAction,
-                    TargetId: targetUserId,
-                    TargetLogin: targetUserLogin,
+                    Target: new User(
+                        Id: targetUserId,
+                        Login: targetUserLogin),
                     CreatedAt: createdAt.Value,
-                    InitiatorId: createdByUserId,
-                    InitiatorLogin: createdBy);
+                    Initiator: new User(
+                        Id: createdByUserId,
+                        Login: createdBy));
                 return true;
 
             default:

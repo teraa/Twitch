@@ -96,7 +96,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
 
         Assert.Equal("ban", action.Action);
         Assert.Equal("target.id", action.TargetId);
-        Assert.Equal("target.login", action.Target);
+        Assert.Equal("target.login", action.TargetLogin);
         Assert.Equal("", action.Reason);
         Assert.Equal(new DateTimeOffset(2022, 1, 1, 0, 0, 0, TimeSpan.Zero), action.CreatedAt);
         Assert.Equal("initiator.id", action.InitiatorId);
@@ -114,7 +114,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
 
         Assert.Equal("ban", action.Action);
         Assert.Equal("target.id", action.TargetId);
-        Assert.Equal("target.login", action.Target);
+        Assert.Equal("target.login", action.TargetLogin);
         Assert.Equal("reason", action.Reason);
         Assert.Equal(new DateTimeOffset(2022, 1, 1, 0, 0, 0, TimeSpan.Zero), action.CreatedAt);
         Assert.Equal("initiator.id", action.InitiatorId);
@@ -132,7 +132,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
 
         Assert.Equal("unban", action.Action);
         Assert.Equal("target.id", action.TargetId);
-        Assert.Equal("target.login", action.Target);
+        Assert.Equal("target.login", action.TargetLogin);
         Assert.Equal(new DateTimeOffset(2022, 1, 1, 0, 0, 0, TimeSpan.Zero), action.CreatedAt);
         Assert.Equal("initiator.id", action.InitiatorId);
         Assert.Equal("initiator.login", action.InitiatorLogin);
@@ -163,7 +163,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
 
         Assert.Equal("delete", action.Action);
         Assert.Equal("target.id", action.TargetId);
-        Assert.Equal("target.login", action.Target);
+        Assert.Equal("target.login", action.TargetLogin);
         Assert.Equal(new DateTimeOffset(2022, 6, 29, 14, 0, 0, TimeSpan.Zero), action.CreatedAt);
         Assert.Equal("initiator.id", action.InitiatorId);
         Assert.Equal("initiator.login", action.InitiatorLogin);
@@ -254,7 +254,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
 
         Assert.Equal("mod", action.Action);
         Assert.Equal("target.id", action.TargetId);
-        Assert.Equal("target.login", action.Target);
+        Assert.Equal("target.login", action.TargetLogin);
         Assert.Equal("initiator.id", action.InitiatorId);
         Assert.Equal("initiator.login", action.InitiatorLogin);
         Assert.Equal("channel.id", action.ChannelId);
@@ -284,7 +284,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
         var action = (Raid)result!;
 
         Assert.Equal("raid", action.Action);
-        Assert.Equal("target.name", action.Target);
+        Assert.Equal("target.name", action.TargetDisplayName);
         Assert.Equal("initiator.id", action.InitiatorId);
         Assert.Equal("initiator.name", action.InitiatorDisplayName);
     }
@@ -357,7 +357,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
 
         Assert.Equal("timeout", action.Action);
         Assert.Equal("target.id", action.TargetId);
-        Assert.Equal("target.login", action.Target);
+        Assert.Equal("target.login", action.TargetLogin);
         Assert.Equal(TimeSpan.FromMinutes(10), action.Duration);
         Assert.Equal("", action.Reason);
         Assert.Equal(new DateTimeOffset(2022, 1, 1, 0, 0, 0, TimeSpan.Zero), action.CreatedAt);
@@ -376,7 +376,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
 
         Assert.Equal("timeout", action.Action);
         Assert.Equal("target.id", action.TargetId);
-        Assert.Equal("target.login", action.Target);
+        Assert.Equal("target.login", action.TargetLogin);
         Assert.Equal(TimeSpan.FromDays(1), action.Duration);
         Assert.Equal("reason", action.Reason);
         Assert.Equal(new DateTimeOffset(2022, 1, 1, 0, 0, 0, TimeSpan.Zero), action.CreatedAt);
@@ -395,7 +395,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
 
         Assert.Equal("untimeout", action.Action);
         Assert.Equal("target.id", action.TargetId);
-        Assert.Equal("target.login", action.Target);
+        Assert.Equal("target.login", action.TargetLogin);
         Assert.Equal(new DateTimeOffset(2022, 1, 1, 0, 0, 0, TimeSpan.Zero), action.CreatedAt);
         Assert.Equal("initiator.id", action.InitiatorId);
         Assert.Equal("initiator.login", action.InitiatorLogin);
@@ -412,7 +412,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
 
         Assert.Equal("approve_unban_request", action.Action);
         Assert.Equal("target.id", action.TargetId);
-        Assert.Equal("target.login", action.Target);
+        Assert.Equal("target.login", action.TargetLogin);
         Assert.Equal("approved response", action.ModeratorMessage);
         Assert.Equal("initiator.id", action.InitiatorId);
         Assert.Equal("initiator.login", action.InitiatorLogin);
@@ -429,7 +429,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
 
         Assert.Equal("deny_unban_request", action.Action);
         Assert.Equal("target.id", action.TargetId);
-        Assert.Equal("target.login", action.Target);
+        Assert.Equal("target.login", action.TargetLogin);
         Assert.Equal("denied response", action.ModeratorMessage);
         Assert.Equal("initiator.id", action.InitiatorId);
         Assert.Equal("initiator.login", action.InitiatorLogin);

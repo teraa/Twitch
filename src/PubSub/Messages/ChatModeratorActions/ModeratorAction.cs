@@ -9,7 +9,7 @@ public interface IModeratorAction : IMessage
 public interface ITargetedModeratorAction : IModeratorAction
 {
     string TargetId { get; }
-    string Target { get; }
+    string TargetLogin { get; }
 }
 
 public interface ITermModeratorAction : IModeratorAction
@@ -23,7 +23,7 @@ public interface ITermModeratorAction : IModeratorAction
 public record Ban(
     string Action,
     string TargetId,
-    string Target,
+    string TargetLogin,
     string Reason,
     DateTimeOffset CreatedAt,
     string InitiatorId,
@@ -33,7 +33,7 @@ public record Ban(
 public record Unban(
     string Action,
     string TargetId,
-    string Target,
+    string TargetLogin,
     DateTimeOffset CreatedAt,
     string InitiatorId,
     string InitiatorLogin
@@ -48,7 +48,7 @@ public record Clear(
 public record Delete(
     string Action,
     string TargetId,
-    string Target,
+    string TargetLogin,
     DateTimeOffset CreatedAt,
     string InitiatorId,
     string InitiatorLogin,
@@ -83,7 +83,7 @@ public record FollowersOff(
 
 public record Raid(
     string Action,
-    string Target,
+    string TargetDisplayName,
     string InitiatorId,
     string InitiatorDisplayName
 ) : IModeratorAction;
@@ -134,7 +134,7 @@ public record R9KBetaOff(
 public record Timeout(
     string Action,
     string TargetId,
-    string Target,
+    string TargetLogin,
     TimeSpan Duration,
     string Reason,
     DateTimeOffset CreatedAt,
@@ -145,7 +145,7 @@ public record Timeout(
 public record Untimeout(
     string Action,
     string TargetId,
-    string Target,
+    string TargetLogin,
     DateTimeOffset CreatedAt,
     string InitiatorId,
     string InitiatorLogin
@@ -156,7 +156,7 @@ public record Untimeout(
 public record Mod(
     string Action,
     string TargetId,
-    string Target,
+    string TargetLogin,
     string InitiatorId,
     string InitiatorLogin,
     string ChannelId
@@ -165,7 +165,7 @@ public record Mod(
 public record Unmod(
     string Action,
     string TargetId,
-    string Target,
+    string TargetLogin,
     string InitiatorId,
     string InitiatorLogin,
     string ChannelId
@@ -174,7 +174,7 @@ public record Unmod(
 public record Vip(
     string Action,
     string TargetId,
-    string Target,
+    string TargetLogin,
     string InitiatorId,
     string InitiatorLogin,
     string ChannelId
@@ -185,7 +185,7 @@ public record Vip(
 public record ApproveUnbanRequest(
     string Action,
     string TargetId,
-    string Target,
+    string TargetLogin,
     string ModeratorMessage,
     string InitiatorId,
     string InitiatorLogin
@@ -194,7 +194,7 @@ public record ApproveUnbanRequest(
 public record DenyUnbanRequest(
     string Action,
     string TargetId,
-    string Target,
+    string TargetLogin,
     string ModeratorMessage,
     string InitiatorId,
     string InitiatorLogin

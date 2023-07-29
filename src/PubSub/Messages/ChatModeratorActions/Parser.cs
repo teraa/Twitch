@@ -43,7 +43,7 @@ public static class Parser
                 result = new ApproveUnbanRequest(
                     Action: type,
                     TargetId: targetUserId,
-                    Target: targetUserLogin,
+                    TargetLogin: targetUserLogin,
                     ModeratorMessage: moderatorMessage,
                     InitiatorId: createdById,
                     InitiatorLogin: createdByLogin);
@@ -59,7 +59,7 @@ public static class Parser
                 result = new DenyUnbanRequest(
                     Action: type,
                     TargetId: targetUserId,
-                    Target: targetUserLogin,
+                    TargetLogin: targetUserLogin,
                     ModeratorMessage: moderatorMessage,
                     InitiatorId: createdById,
                     InitiatorLogin: createdByLogin);
@@ -76,7 +76,7 @@ public static class Parser
                 result = new Mod(
                     Action: moderationAction,
                     TargetId: targetUserId,
-                    Target: targetUserLogin,
+                    TargetLogin: targetUserLogin,
                     InitiatorId: createdByUserId,
                     InitiatorLogin: createdBy,
                     ChannelId: channelId);
@@ -93,7 +93,7 @@ public static class Parser
                 result = new Unmod(
                     Action: moderationAction,
                     TargetId: targetUserId,
-                    Target: targetUserLogin,
+                    TargetLogin: targetUserLogin,
                     InitiatorId: createdByUserId,
                     InitiatorLogin: createdBy,
                     ChannelId: channelId);
@@ -109,7 +109,7 @@ public static class Parser
                 result = new Vip(
                     Action: type,
                     TargetId: targetUserId,
-                    Target: targetUserLogin,
+                    TargetLogin: targetUserLogin,
                     InitiatorId: createdByUserId,
                     InitiatorLogin: createdBy,
                     ChannelId: channelId);
@@ -219,7 +219,7 @@ public static class Parser
                 result = new Ban(
                     Action: moderationAction,
                     TargetId: targetUserId,
-                    Target: targetUserLogin,
+                    TargetLogin: targetUserLogin,
                     Reason: args[1],
                     CreatedAt: createdAt.Value,
                     InitiatorId: createdByUserId,
@@ -237,7 +237,7 @@ public static class Parser
                 result = new Unban(
                     Action: moderationAction,
                     TargetId: targetUserId,
-                    Target: targetUserLogin,
+                    TargetLogin: targetUserLogin,
                     CreatedAt: createdAt.Value,
                     InitiatorId: createdByUserId,
                     InitiatorLogin: createdBy
@@ -264,7 +264,7 @@ public static class Parser
                 result = new Delete(
                     Action: moderationAction,
                     TargetId: targetUserId,
-                    Target: args[0],
+                    TargetLogin: args[0],
                     CreatedAt: createdAt.Value,
                     InitiatorId: createdByUserId,
                     InitiatorLogin: createdBy,
@@ -324,7 +324,7 @@ public static class Parser
 
                 result = new Raid(
                     Action: moderationAction,
-                    Target: args[0],
+                    TargetDisplayName: args[0],
                     InitiatorId: createdByUserId,
                     InitiatorDisplayName: createdBy);
                 return true;
@@ -414,7 +414,7 @@ public static class Parser
                 result = new Timeout(
                     Action: moderationAction,
                     TargetId: targetUserId,
-                    Target: targetUserLogin,
+                    TargetLogin: targetUserLogin,
                     Duration: TimeSpan.FromSeconds(timeoutDuration),
                     Reason: args[2],
                     CreatedAt: createdAt.Value,
@@ -432,7 +432,7 @@ public static class Parser
                 result = new Untimeout(
                     Action: moderationAction,
                     TargetId: targetUserId,
-                    Target: targetUserLogin,
+                    TargetLogin: targetUserLogin,
                     CreatedAt: createdAt.Value,
                     InitiatorId: createdByUserId,
                     InitiatorLogin: createdBy);

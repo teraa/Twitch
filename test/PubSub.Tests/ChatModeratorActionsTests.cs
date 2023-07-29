@@ -26,7 +26,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
         Assert.Equal("00000000-0000-0000-0000-000000000001", action.Id);
         Assert.Equal("block phrase", action.Text);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
         Assert.Equal("channel.id", action.ChannelId);
         Assert.Equal(new DateTimeOffset(2022, 1, 1, 0, 0, 0, TimeSpan.Zero), action.UpdatedAt);
     }
@@ -44,7 +44,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
         Assert.Equal("00000000-0000-0000-0000-000000000001", action.Id);
         Assert.Equal("block phrase", action.Text);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
         Assert.Equal("channel.id", action.ChannelId);
         Assert.Equal(new DateTimeOffset(2022, 1, 1, 0, 0, 0, TimeSpan.Zero), action.UpdatedAt);
     }
@@ -62,7 +62,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
         Assert.Equal("00000000-0000-0000-0000-000000000002", action.Id);
         Assert.Equal("permit phrase", action.Text);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
         Assert.Equal("channel.id", action.ChannelId);
         Assert.Equal(new DateTimeOffset(2022, 1, 1, 0, 0, 0, TimeSpan.Zero), action.UpdatedAt);
     }
@@ -80,7 +80,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
         Assert.Equal("00000000-0000-0000-0000-000000000002", action.Id);
         Assert.Equal("permit phrase", action.Text);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
         Assert.Equal("channel.id", action.ChannelId);
         Assert.Equal(new DateTimeOffset(2022, 1, 1, 0, 0, 0, TimeSpan.Zero), action.UpdatedAt);
     }
@@ -100,7 +100,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
         Assert.Equal("", action.Reason);
         Assert.Equal(new DateTimeOffset(2022, 1, 1, 0, 0, 0, TimeSpan.Zero), action.CreatedAt);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
     }
 
     [Fact]
@@ -118,7 +118,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
         Assert.Equal("reason", action.Reason);
         Assert.Equal(new DateTimeOffset(2022, 1, 1, 0, 0, 0, TimeSpan.Zero), action.CreatedAt);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
     }
 
     [Fact]
@@ -135,7 +135,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
         Assert.Equal("target.login", action.Target);
         Assert.Equal(new DateTimeOffset(2022, 1, 1, 0, 0, 0, TimeSpan.Zero), action.CreatedAt);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
     }
 
     [Fact]
@@ -166,7 +166,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
         Assert.Equal("target.login", action.Target);
         Assert.Equal(new DateTimeOffset(2022, 6, 29, 14, 0, 0, TimeSpan.Zero), action.CreatedAt);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
         Assert.Equal("00000000-0000-0000-0000-000000000003", action.MessageId);
         Assert.Equal("message", action.Message);
     }
@@ -182,7 +182,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
 
         Assert.Equal("emoteonly", action.Action);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
     }
 
     [Fact]
@@ -196,7 +196,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
 
         Assert.Equal("emoteonlyoff", action.Action);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
     }
 
     [Fact]
@@ -210,7 +210,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
 
         Assert.Equal("followersoff", action.Action);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
     }
 
     [Fact]
@@ -225,7 +225,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
         Assert.Equal("followers", action.Action);
         Assert.Equal(TimeSpan.Zero, action.Duration);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
     }
 
     [Fact]
@@ -240,7 +240,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
         Assert.Equal("followers", action.Action);
         Assert.Equal(TimeSpan.FromDays(1), action.Duration);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
     }
 
     [Fact]
@@ -256,7 +256,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
         Assert.Equal("target.id", action.TargetId);
         Assert.Equal("target.login", action.Target);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
         Assert.Equal("channel.id", action.ChannelId);
     }
 
@@ -271,7 +271,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
 
         Assert.Equal("unraid", action.Action);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.name", action.Initiator);
+        Assert.Equal("initiator.name", action.InitiatorDisplayName);
     }
 
     [Fact]
@@ -286,7 +286,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
         Assert.Equal("raid", action.Action);
         Assert.Equal("target.name", action.Target);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.name", action.Initiator);
+        Assert.Equal("initiator.name", action.InitiatorDisplayName);
     }
 
     [Fact]
@@ -300,7 +300,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
 
         Assert.Equal("slowoff", action.Action);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
     }
 
     [Fact]
@@ -315,7 +315,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
         Assert.Equal("slow", action.Action);
         Assert.Equal(TimeSpan.FromSeconds(30), action.Duration);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
     }
 
     [Fact]
@@ -329,7 +329,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
 
         Assert.Equal("subscribersoff", action.Action);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
     }
 
     [Fact]
@@ -343,7 +343,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
 
         Assert.Equal("subscribers", action.Action);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
     }
 
     [Fact]
@@ -362,7 +362,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
         Assert.Equal("", action.Reason);
         Assert.Equal(new DateTimeOffset(2022, 1, 1, 0, 0, 0, TimeSpan.Zero), action.CreatedAt);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
     }
 
     [Fact]
@@ -381,7 +381,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
         Assert.Equal("reason", action.Reason);
         Assert.Equal(new DateTimeOffset(2022, 1, 1, 0, 0, 0, TimeSpan.Zero), action.CreatedAt);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
     }
 
     [Fact]
@@ -398,7 +398,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
         Assert.Equal("target.login", action.Target);
         Assert.Equal(new DateTimeOffset(2022, 1, 1, 0, 0, 0, TimeSpan.Zero), action.CreatedAt);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
     }
 
     [Fact]
@@ -415,7 +415,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
         Assert.Equal("target.login", action.Target);
         Assert.Equal("approved response", action.ModeratorMessage);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
     }
 
     [Fact]
@@ -432,7 +432,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
         Assert.Equal("target.login", action.Target);
         Assert.Equal("denied response", action.ModeratorMessage);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
     }
 
     [Fact]
@@ -446,7 +446,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
 
         Assert.Equal("r9kbetaoff", action.Action);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
     }
 
     [Fact]
@@ -460,6 +460,6 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
 
         Assert.Equal("r9kbeta", action.Action);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
     }
 }

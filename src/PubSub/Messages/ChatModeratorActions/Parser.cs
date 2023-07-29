@@ -46,7 +46,7 @@ public static class Parser
                     Target: targetUserLogin,
                     ModeratorMessage: moderatorMessage,
                     InitiatorId: createdById,
-                    Initiator: createdByLogin);
+                    InitiatorLogin: createdByLogin);
                 return true;
 
             case "deny_unban_request" when
@@ -62,7 +62,7 @@ public static class Parser
                     Target: targetUserLogin,
                     ModeratorMessage: moderatorMessage,
                     InitiatorId: createdById,
-                    Initiator: createdByLogin);
+                    InitiatorLogin: createdByLogin);
                 return true;
 
             case "moderator_added" when
@@ -78,7 +78,7 @@ public static class Parser
                     TargetId: targetUserId,
                     Target: targetUserLogin,
                     InitiatorId: createdByUserId,
-                    Initiator: createdBy,
+                    InitiatorLogin: createdBy,
                     ChannelId: channelId);
                 return true;
 
@@ -95,7 +95,7 @@ public static class Parser
                     TargetId: targetUserId,
                     Target: targetUserLogin,
                     InitiatorId: createdByUserId,
-                    Initiator: createdBy,
+                    InitiatorLogin: createdBy,
                     ChannelId: channelId);
                 return true;
 
@@ -111,7 +111,7 @@ public static class Parser
                     TargetId: targetUserId,
                     Target: targetUserLogin,
                     InitiatorId: createdByUserId,
-                    Initiator: createdBy,
+                    InitiatorLogin: createdBy,
                     ChannelId: channelId);
                 return true;
 
@@ -139,7 +139,7 @@ public static class Parser
                             Id: id,
                             Text: text,
                             InitiatorId: requesterId,
-                            Initiator: requesterLogin,
+                            InitiatorLogin: requesterLogin,
                             ChannelId: channelId,
                             UpdatedAt: updatedAt);
                         return true;
@@ -150,7 +150,7 @@ public static class Parser
                             Id: id,
                             Text: text,
                             InitiatorId: requesterId,
-                            Initiator: requesterLogin,
+                            InitiatorLogin: requesterLogin,
                             ChannelId: channelId,
                             UpdatedAt: updatedAt);
                         return true;
@@ -161,7 +161,7 @@ public static class Parser
                             Id: id,
                             Text: text,
                             InitiatorId: requesterId,
-                            Initiator: requesterLogin,
+                            InitiatorLogin: requesterLogin,
                             ChannelId: channelId,
                             UpdatedAt: updatedAt);
                         return true;
@@ -172,7 +172,7 @@ public static class Parser
                             Id: id,
                             Text: text,
                             InitiatorId: requesterId,
-                            Initiator: requesterLogin,
+                            InitiatorLogin: requesterLogin,
                             ChannelId: channelId,
                             UpdatedAt: updatedAt);
                         return true;
@@ -223,7 +223,7 @@ public static class Parser
                     Reason: args[1],
                     CreatedAt: createdAt.Value,
                     InitiatorId: createdByUserId,
-                    Initiator: createdBy
+                    InitiatorLogin: createdBy
                 );
                 return true;
 
@@ -240,7 +240,7 @@ public static class Parser
                     Target: targetUserLogin,
                     CreatedAt: createdAt.Value,
                     InitiatorId: createdByUserId,
-                    Initiator: createdBy
+                    InitiatorLogin: createdBy
                 );
                 return true;
 
@@ -267,7 +267,7 @@ public static class Parser
                     Target: args[0],
                     CreatedAt: createdAt.Value,
                     InitiatorId: createdByUserId,
-                    Initiator: createdBy,
+                    InitiatorLogin: createdBy,
                     MessageId: args[2],
                     Message: args[1]);
                 return true;
@@ -279,7 +279,7 @@ public static class Parser
                 result = new EmoteOnly(
                     Action: moderationAction,
                     InitiatorId: createdByUserId,
-                    Initiator: createdBy);
+                    InitiatorLogin: createdBy);
                 return true;
 
             case "emoteonlyoff" when
@@ -289,7 +289,7 @@ public static class Parser
                 result = new EmoteOnlyOff(
                     Action: moderationAction,
                     InitiatorId: createdByUserId,
-                    Initiator: createdBy);
+                    InitiatorLogin: createdBy);
                 return true;
 
             case "followers" when
@@ -302,7 +302,7 @@ public static class Parser
                     Action: moderationAction,
                     Duration: TimeSpan.FromMinutes(followersDuration),
                     InitiatorId: createdByUserId,
-                    Initiator: createdBy);
+                    InitiatorLogin: createdBy);
                 return true;
 
             case "followersoff" when
@@ -312,7 +312,7 @@ public static class Parser
                 result = new FollowersOff(
                     Action: moderationAction,
                     InitiatorId: createdByUserId,
-                    Initiator: createdBy);
+                    InitiatorLogin: createdBy);
                 return true;
 
             // TODO: automod_rejected
@@ -326,7 +326,7 @@ public static class Parser
                     Action: moderationAction,
                     Target: args[0],
                     InitiatorId: createdByUserId,
-                    Initiator: createdBy);
+                    InitiatorDisplayName: createdBy);
                 return true;
 
             case "unraid" when
@@ -336,7 +336,7 @@ public static class Parser
                 result = new Unraid(
                     Action: moderationAction,
                     InitiatorId: createdByUserId,
-                    Initiator: createdBy);
+                    InitiatorDisplayName: createdBy);
                 return true;
 
             case "slow" when
@@ -349,7 +349,7 @@ public static class Parser
                     Action: moderationAction,
                     Duration: TimeSpan.FromSeconds(followersDuration),
                     InitiatorId: createdByUserId,
-                    Initiator: createdBy);
+                    InitiatorLogin: createdBy);
                 return true;
 
             case "slowoff" when
@@ -359,7 +359,7 @@ public static class Parser
                 result = new SlowOff(
                     Action: moderationAction,
                     InitiatorId: createdByUserId,
-                    Initiator: createdBy);
+                    InitiatorLogin: createdBy);
                 return true;
 
             case "subscribers" when
@@ -369,7 +369,7 @@ public static class Parser
                 result = new Subscribers(
                     Action: moderationAction,
                     InitiatorId: createdByUserId,
-                    Initiator: createdBy);
+                    InitiatorLogin: createdBy);
                 return true;
 
             case "subscribersoff" when
@@ -379,7 +379,7 @@ public static class Parser
                 result = new SubscribersOff(
                     Action: moderationAction,
                     InitiatorId: createdByUserId,
-                    Initiator: createdBy);
+                    InitiatorLogin: createdBy);
                 return true;
 
             case "r9kbeta" when
@@ -389,7 +389,7 @@ public static class Parser
                 result = new R9KBeta(
                     Action: moderationAction,
                     InitiatorId: createdByUserId,
-                    Initiator: createdBy);
+                    InitiatorLogin: createdBy);
                 return true;
 
             case "r9kbetaoff" when
@@ -399,7 +399,7 @@ public static class Parser
                 result = new R9KBetaOff(
                     Action: moderationAction,
                     InitiatorId: createdByUserId,
-                    Initiator: createdBy);
+                    InitiatorLogin: createdBy);
                 return true;
 
             case "timeout" when
@@ -419,7 +419,7 @@ public static class Parser
                     Reason: args[2],
                     CreatedAt: createdAt.Value,
                     InitiatorId: createdByUserId,
-                    Initiator: createdBy);
+                    InitiatorLogin: createdBy);
                 return true;
 
             case "untimeout" when
@@ -435,7 +435,7 @@ public static class Parser
                     Target: targetUserLogin,
                     CreatedAt: createdAt.Value,
                     InitiatorId: createdByUserId,
-                    Initiator: createdBy);
+                    InitiatorLogin: createdBy);
                 return true;
 
             default:

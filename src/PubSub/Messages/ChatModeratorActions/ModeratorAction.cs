@@ -13,12 +13,12 @@ public interface IInitiatorModeratorAction : IModeratorAction
     string IModeratorAction.InitiatorId => Initiator.Id;
 }
 
-public interface ITargetedModeratorAction : IModeratorAction
+public interface ITargetedModeratorAction : IInitiatorModeratorAction
 {
     User Target { get; }
 }
 
-public interface ITermModeratorAction : IModeratorAction
+public interface ITermModeratorAction : IInitiatorModeratorAction
 {
     string Id { get; }
     string Text { get; }
@@ -37,14 +37,14 @@ public record Ban(
     string Reason,
     DateTimeOffset CreatedAt,
     User Initiator
-) : IInitiatorModeratorAction, ITargetedModeratorAction;
+) : ITargetedModeratorAction;
 
 public record Unban(
     string Action,
     User Target,
     DateTimeOffset CreatedAt,
     User Initiator
-) : IInitiatorModeratorAction, ITargetedModeratorAction;
+) : ITargetedModeratorAction;
 
 public record Clear(
     string Action,
@@ -58,7 +58,7 @@ public record Delete(
     User Initiator,
     string MessageId,
     string Message
-) : IInitiatorModeratorAction, ITargetedModeratorAction;
+) : ITargetedModeratorAction;
 
 public record EmoteOnly(
     string Action,
@@ -132,14 +132,14 @@ public record Timeout(
     string Reason,
     DateTimeOffset CreatedAt,
     User Initiator
-) : IInitiatorModeratorAction, ITargetedModeratorAction;
+) : ITargetedModeratorAction;
 
 public record Untimeout(
     string Action,
     User Target,
     DateTimeOffset CreatedAt,
     User Initiator
-) : IInitiatorModeratorAction, ITargetedModeratorAction;
+) : ITargetedModeratorAction;
 
 // -----------------
 
@@ -148,21 +148,21 @@ public record Mod(
     User Target,
     User Initiator,
     string ChannelId
-) : IInitiatorModeratorAction, ITargetedModeratorAction;
+) : ITargetedModeratorAction;
 
 public record Unmod(
     string Action,
     User Target,
     User Initiator,
     string ChannelId
-) : IInitiatorModeratorAction, ITargetedModeratorAction;
+) : ITargetedModeratorAction;
 
 public record Vip(
     string Action,
     User Target,
     User Initiator,
     string ChannelId
-) : IInitiatorModeratorAction, ITargetedModeratorAction;
+) : ITargetedModeratorAction;
 
 // -----------------
 
@@ -171,14 +171,14 @@ public record ApproveUnbanRequest(
     User Target,
     string ModeratorMessage,
     User Initiator
-) : IInitiatorModeratorAction, ITargetedModeratorAction;
+) : ITargetedModeratorAction;
 
 public record DenyUnbanRequest(
     string Action,
     User Target,
     string ModeratorMessage,
     User Initiator
-) : IInitiatorModeratorAction, ITargetedModeratorAction;
+) : ITargetedModeratorAction;
 
 // -----------------
 
@@ -189,7 +189,7 @@ public record AddBlockedTerm(
     User Initiator,
     string ChannelId,
     DateTimeOffset UpdatedAt
-) : IInitiatorModeratorAction, ITermModeratorAction;
+) : ITermModeratorAction;
 
 public record DeleteBlockedTerm(
     string Action,
@@ -198,7 +198,7 @@ public record DeleteBlockedTerm(
     User Initiator,
     string ChannelId,
     DateTimeOffset UpdatedAt
-) : IInitiatorModeratorAction, ITermModeratorAction;
+) : ITermModeratorAction;
 
 public record AddPermittedTerm(
     string Action,
@@ -207,7 +207,7 @@ public record AddPermittedTerm(
     User Initiator,
     string ChannelId,
     DateTimeOffset UpdatedAt
-) : IInitiatorModeratorAction, ITermModeratorAction;
+) : ITermModeratorAction;
 
 public record DeletePermittedTerm(
     string Action,
@@ -216,4 +216,4 @@ public record DeletePermittedTerm(
     User Initiator,
     string ChannelId,
     DateTimeOffset UpdatedAt
-) : IInitiatorModeratorAction, ITermModeratorAction;
+) : ITermModeratorAction;

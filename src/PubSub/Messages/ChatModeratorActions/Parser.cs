@@ -251,7 +251,7 @@ public static class Parser
                 result = new Clear(
                     Action: moderationAction,
                     InitiatorId: createdByUserId,
-                    Initiator: createdBy);
+                    InitiatorLogin: createdBy);
                 return true;
 
             case "delete" when

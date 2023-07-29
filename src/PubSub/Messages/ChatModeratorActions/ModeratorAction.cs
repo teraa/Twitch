@@ -42,7 +42,7 @@ public record Unban(
 public record Clear(
     string Action,
     string InitiatorId,
-    string Initiator
+    string InitiatorLogin
 ) : IModeratorAction;
 
 public record Delete(

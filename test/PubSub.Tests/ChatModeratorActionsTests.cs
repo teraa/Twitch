@@ -149,7 +149,7 @@ public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampl
 
         Assert.Equal("clear", action.Action);
         Assert.Equal("initiator.id", action.InitiatorId);
-        Assert.Equal("initiator.login", action.Initiator);
+        Assert.Equal("initiator.login", action.InitiatorLogin);
     }
 
     [Fact]

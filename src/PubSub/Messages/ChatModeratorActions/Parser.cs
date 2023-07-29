@@ -240,7 +240,7 @@ public static class Parser
                     Initiator: new User(
                         Id: createdByUserId,
                         Login: createdBy
-                ));
+                    ));
                 return true;
 
             case "unban" when
@@ -259,7 +259,7 @@ public static class Parser
                     Initiator: new User(
                         Id: createdByUserId,
                         Login: createdBy
-                ));
+                    ));
                 return true;
 
             case "clear" when

@@ -121,15 +121,15 @@ public class PubSubService : WsService
             case PayloadType.MESSAGE:
             {
                 var data = elem.GetProperty("data");
-                var topic = data.GetProperty("topic").GetString();
-                var message = data.GetProperty("message").GetString();
+                var rawTopic = data.GetProperty("topic").GetString();
+                var rawInnerMessage = data.GetProperty("message").GetString();
 
-                Debug.Assert(topic is not null);
-                Debug.Assert(message is not null);
+                Debug.Assert(rawTopic is not null);
+                Debug.Assert(rawInnerMessage is not null);
 
-                using var messageDoc = JsonDocument.Parse(message);
-                await PublishAsync(new MessageReceived(topic, messageDoc), cancellationToken);
-                await HandleMessageAsync(topic, messageDoc, cancellationToken);
+                using var innerMessage = JsonDocument.Parse(rawInnerMessage);
+                await PublishAsync(new MessageReceived(rawTopic, innerMessage), cancellationToken);
+                await HandleMessageAsync(rawTopic, rawInnerMessage, innerMessage, cancellationToken);
                 break;
             }
 
@@ -140,11 +140,11 @@ public class PubSubService : WsService
         }
     }
 
-    private async Task HandleMessageAsync(string topicString, JsonDocument message, CancellationToken cancellationToken)
+    private async Task HandleMessageAsync(string rawTopic, string rawMessage, JsonDocument message, CancellationToken cancellationToken)
     {
-        if (!Topic.TryParse(topicString, out var topic))
+        if (!Topic.TryParse(rawTopic, out var topic))
         {
-            _logger.LogWarning("Unknown topic: {Topic}", topicString);
+            _logger.LogWarning("Unknown topic: {Topic}", rawTopic);
             return;
         }
 
@@ -159,7 +159,8 @@ public class PubSubService : WsService
                 break;
 
             default:
-                await PublishAsync(new UnknownMessageReceived(topicString, message), cancellationToken);
+                _logger.LogWarning("Unknown message: {Message}", rawMessage);
+                await PublishAsync(new UnknownMessageReceived(rawTopic, message), cancellationToken);
                 break;
         }
     }

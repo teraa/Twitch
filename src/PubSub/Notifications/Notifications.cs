@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using MediatR;
 using Teraa.Twitch.PubSub.Messages.ChannelUnbanRequests;
 using Teraa.Twitch.PubSub.Messages.ChatModeratorActions;
+using Teraa.Twitch.PubSub.Messages.Shoutout;
 using Teraa.Twitch.PubSub.Topics;
 
 namespace Teraa.Twitch.PubSub.Notifications;
@@ -17,3 +18,4 @@ namespace Teraa.Twitch.PubSub.Notifications;
 [PublicAPI] public record ReconnectReceived : INotification;
 [PublicAPI] public record ChatModeratorActionReceived(ChatModeratorActionsTopic Topic, IModeratorAction Action) : INotification;
 [PublicAPI] public record ChannelUnbanRequestReceived(ChannelUnbanRequestsTopic Topic, IUnbanRequest Request) : INotification;
+[PublicAPI] public record ShoutoutReceived(ShoutoutTopic Topic, Shoutout Shoutout) : INotification;

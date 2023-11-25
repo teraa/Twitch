@@ -158,6 +158,10 @@ public class PubSubService : WsService
                 await PublishAsync(new ChannelUnbanRequestReceived(t, request), cancellationToken);
                 break;
 
+            case ShoutoutTopic t when Messages.Shoutout.Parser.TryParse(message, out var shoutout):
+                await PublishAsync(new ShoutoutReceived(t, shoutout), cancellationToken);
+                break;
+
             default:
                 _logger.LogWarning("Unknown message: {Message}", rawMessage);
                 await PublishAsync(new UnknownMessageReceived(rawTopic, message), cancellationToken);

@@ -1,0 +1,15 @@
+﻿{
+  "type": "create",
+  "data": {
+    "broadcasterUserID": "channel.id",
+    "targetUserID": "target.id",
+    "targetLogin": "target.login",
+    "targetUserProfileImageURL": "https://static-cdn.jtvnw.net/jtv_user_pictures/00000000-0000-0000-0000-000000000000-profile_image-%s.jpeg",
+    "sourceUserID": "initiator.id",
+    "sourceLogin": "initiator.login",
+    "shoutoutID": "00000000-0000-0000-0000-000000000000",
+    "targetUserDisplayName": "target.display",
+    "targetUserCTAInfo": "",
+    "targetUserPrimaryColorHex": "B69C00"
+  }
+}

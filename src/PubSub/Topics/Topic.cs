@@ -21,6 +21,13 @@ public record ChannelUnbanRequestsTopic(string UserId, string ChannelId) : ITopi
     public string Value => $"{Prefix}.{UserId}.{ChannelId}";
 }
 
+public record ShoutoutTopic(string ChannelId) : ITopic
+{
+    public const string Prefix = "shoutout";
+
+    public string Value => $"{Prefix}.{ChannelId}";
+}
+
 public static class Topic
 {
     public static bool TryParse(string input, [NotNullWhen(true)] out ITopic? topic)
@@ -31,6 +38,7 @@ public static class Topic
         {
             ChatModeratorActionsTopic.Prefix when parts.Length == 3 => new ChatModeratorActionsTopic(parts[1], parts[2]),
             ChannelUnbanRequestsTopic.Prefix when parts.Length == 3 => new ChannelUnbanRequestsTopic(parts[1], parts[2]),
+            ShoutoutTopic.Prefix when parts.Length == 2 => new ShoutoutTopic(parts[1]),
             _ => null,
         };
 

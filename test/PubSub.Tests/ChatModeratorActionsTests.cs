@@ -4,11 +4,11 @@ using Xunit;
 
 namespace PubSub.Tests;
 
-public class ChatModeratorActionsTests : IClassFixture<ChatModeratorActionsSampleRepository>
+public class ChatModeratorActionsTests : IClassFixture<SampleRepository>
 {
-    private readonly ChatModeratorActionsSampleRepository _repository;
+    private readonly SampleRepository _repository;
 
-    public ChatModeratorActionsTests(ChatModeratorActionsSampleRepository repository)
+    public ChatModeratorActionsTests(SampleRepository repository)
     {
         _repository = repository;
     }

@@ -10,14 +10,9 @@ using Xunit;
 namespace PubSub.Tests;
 
 [UsedImplicitly]
-public class ChatModeratorActionsSampleRepository : IAsyncLifetime
+public class SampleRepository : IAsyncLifetime
 {
-    private readonly Dictionary<string, string> _samples;
-
-    public ChatModeratorActionsSampleRepository()
-    {
-        _samples = new Dictionary<string, string>();
-    }
+    private readonly Dictionary<string, string> _samples = new();
 
     public JsonDocument GetJson(string sampleName) => JsonDocument.Parse(_samples[sampleName]);
 

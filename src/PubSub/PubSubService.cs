@@ -89,8 +89,9 @@ public class PubSubService : WsService
     protected override async ValueTask HandleReceivedAsync(string rawMessage, CancellationToken cancellationToken)
     {
         using var doc = JsonDocument.Parse(rawMessage);
+        var now = DateTimeOffset.UtcNow;
 
-        await PublishAsync(new PayloadReceived(doc), cancellationToken);
+        await PublishAsync(new PayloadReceived(doc, now), cancellationToken);
 
         var elem = doc.RootElement;
         var payloadType = elem.GetProperty("type").Deserialize<PayloadType>(_options.JsonSerializerOptions);
@@ -99,12 +100,12 @@ public class PubSubService : WsService
         {
             case PayloadType.RECONNECT:
                 _ = ReconnectAsync(cancellationToken);
-                await PublishAsync(new ReconnectReceived(), cancellationToken);
+                await PublishAsync(new ReconnectReceived(now), cancellationToken);
                 break;
 
             case PayloadType.PONG:
                 _lastPongAt = DateTimeOffset.UtcNow;
-                await PublishAsync(new PongReceived(), cancellationToken);
+                await PublishAsync(new PongReceived(now), cancellationToken);
                 break;
 
             case PayloadType.RESPONSE:
@@ -114,7 +115,7 @@ public class PubSubService : WsService
                 Debug.Assert(error is not null);
                 Debug.Assert(nonce is not null);
 
-                await PublishAsync(new ResponseReceived(error, nonce), cancellationToken);
+                await PublishAsync(new ResponseReceived(error, nonce, now), cancellationToken);
                 break;
             }
 
@@ -128,19 +129,19 @@ public class PubSubService : WsService
                 Debug.Assert(rawInnerMessage is not null);
 
                 using var innerMessage = JsonDocument.Parse(rawInnerMessage);
-                await PublishAsync(new MessageReceived(rawTopic, innerMessage), cancellationToken);
-                await HandleMessageAsync(rawTopic, rawInnerMessage, innerMessage, cancellationToken);
+                await PublishAsync(new MessageReceived(rawTopic, innerMessage, now), cancellationToken);
+                await HandleMessageAsync(rawTopic, rawInnerMessage, innerMessage, now, cancellationToken);
                 break;
             }
 
             default:
                 _logger.LogWarning("Unknown payload type: {PayloadType}", payloadType);
-                await PublishAsync(new UnknownPayloadReceived(doc), cancellationToken);
+                await PublishAsync(new UnknownPayloadReceived(doc, now), cancellationToken);
                 break;
         }
     }
 
-    private async Task HandleMessageAsync(string rawTopic, string rawMessage, JsonDocument message, CancellationToken cancellationToken)
+    private async Task HandleMessageAsync(string rawTopic, string rawMessage, JsonDocument message, DateTimeOffset receivedAt, CancellationToken cancellationToken)
     {
         if (!Topic.TryParse(rawTopic, out var topic))
         {
@@ -151,20 +152,20 @@ public class PubSubService : WsService
         switch (topic)
         {
             case ChatModeratorActionsTopic t when Messages.ChatModeratorActions.Parser.TryParse(message, out var action):
-                await PublishAsync(new ChatModeratorActionReceived(t, action), cancellationToken);
+                await PublishAsync(new ChatModeratorActionReceived(t, action, receivedAt), cancellationToken);
                 break;
 
             case ChannelUnbanRequestsTopic t when Messages.ChannelUnbanRequests.Parser.TryParse(message, out var request):
-                await PublishAsync(new ChannelUnbanRequestReceived(t, request), cancellationToken);
+                await PublishAsync(new ChannelUnbanRequestReceived(t, request, receivedAt), cancellationToken);
                 break;
 
             case ShoutoutTopic t when Messages.Shoutout.Parser.TryParse(message, out var shoutout):
-                await PublishAsync(new ShoutoutReceived(t, shoutout), cancellationToken);
+                await PublishAsync(new ShoutoutReceived(t, shoutout, receivedAt), cancellationToken);
                 break;
 
             default:
                 _logger.LogWarning("Unknown message: {Message}", rawMessage);
-                await PublishAsync(new UnknownMessageReceived(rawTopic, message), cancellationToken);
+                await PublishAsync(new UnknownMessageReceived(rawTopic, message, receivedAt), cancellationToken);
                 break;
         }
     }

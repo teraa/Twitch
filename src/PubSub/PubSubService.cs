@@ -163,6 +163,10 @@ public class PubSubService : WsService
                 await PublishAsync(new ShoutoutReceived(t, shoutout, receivedAt), cancellationToken);
                 break;
 
+            case LowTrustUsersTopic t when Messages.LowTrustUsers.Parser.TryParse(message, out var treatmentUpdate):
+                await PublishAsync(new LowTrustUserTreatmentUpdateReceived(t, treatmentUpdate, receivedAt), cancellationToken);
+                break;
+
             default:
                 _logger.LogWarning("Unknown message: {Message}", rawMessage);
                 await PublishAsync(new UnknownMessageReceived(rawTopic, message, receivedAt), cancellationToken);

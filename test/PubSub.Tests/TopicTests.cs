@@ -8,8 +8,9 @@ public class TopicTests
     private static IEnumerable<object[]> Parse_Topic_Data() => new[]
     {
         new object[] {"chat_moderator_actions.user_id.channel_id", new ChatModeratorActionsTopic("user_id", "channel_id")},
-        new object[] {"channel-unban-requests.user_id.channel_id", new ChannelUnbanRequestsTopic("user_id", "channel_id"),},
+        new object[] {"channel-unban-requests.user_id.channel_id", new ChannelUnbanRequestsTopic("user_id", "channel_id")},
         new object[] {"shoutout.channel_id", new ShoutoutTopic("channel_id")},
+        new object[] {"low-trust-users.user_id.channel_id", new LowTrustUsersTopic("user_id", "channel_id")},
     };
 
     [Theory]

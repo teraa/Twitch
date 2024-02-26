@@ -1,0 +1,21 @@
+{
+  "type": "low_trust_user_treatment_update",
+  "data": {
+    "low_trust_id": "channel_id.target_id",
+    "channel_id": "channel_id",
+    "updated_by": {
+      "id": "initiator_id",
+      "login": "initiator_login",
+      "display_name": "initiator_name"
+    },
+    "updated_at": "2024-02-01T01:00:00Z",
+    "target_user_id": "target_id",
+    "target_user": "target_login",
+    "treatment": "ACTIVE_MONITORING",
+    "types": [
+      "MANUALLY_ADDED"
+    ],
+    "ban_evasion_evaluation": "UNLIKELY_EVADER",
+    "evaluated_at": "2024-02-01T00:00:00Z"
+  }
+}

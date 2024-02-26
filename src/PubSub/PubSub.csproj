@@ -11,4 +11,8 @@
       <ProjectReference Include="..\Ws\Ws.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="System.Text.Json" Version="8.0.2" />
+    </ItemGroup>
+
 </Project>

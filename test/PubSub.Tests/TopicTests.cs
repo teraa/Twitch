@@ -5,7 +5,7 @@ namespace PubSub.Tests;
 
 public class TopicTests
 {
-    private static IEnumerable<object[]> Parse_Topic_Data() => new[]
+    public static IEnumerable<object[]> Parse_Topic_Data() => new[]
     {
         new object[] {"chat_moderator_actions.user_id.channel_id", new ChatModeratorActionsTopic("user_id", "channel_id")},
         new object[] {"channel-unban-requests.user_id.channel_id", new ChannelUnbanRequestsTopic("user_id", "channel_id")},

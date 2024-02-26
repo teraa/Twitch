@@ -15,7 +15,10 @@ public static class ServiceCollectionExtensions
             client.BaseAddress = new Uri("https://api.twitch.tv/helix/");
         });
 
-        services.AddMediatR(typeof(HelixService));
+        services.AddMediatR(config =>
+        {
+            config.RegisterServicesFromAssemblyContaining<HelixService>();
+        });
         services.AddTransient(typeof(IRequestHandler<,>), typeof(Send.Handler<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestValidationBehaviour<,>));
         services.AddValidatorsFromAssemblyContaining<HelixService>();

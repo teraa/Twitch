@@ -20,7 +20,7 @@ var services = new ServiceCollection()
     {
         configure.AddSerilog();
     })
-    .AddMediatR(typeof(Program))
+    .AddMediatR(config => config.RegisterServicesFromAssemblyContaining<Program>())
     .AddTmiService(options =>
     {
         // options.Uri = new Uri("ws://localhost:5033/ws");

@@ -21,7 +21,7 @@ var services = new ServiceCollection()
     .AddLogging(configure => configure.AddSerilog())
     .AddHelixService(options =>
     {
-        options.ClientId = config["Twitch:ClientId"];
+        options.ClientId = config["Twitch:ClientId"]!;
     })
     .BuildServiceProvider(new ServiceProviderOptions
     {
@@ -33,7 +33,7 @@ var sc = new ServiceCollection();
 
 using var scope = services.CreateScope();
 var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-var response = await mediator.Send(new Get.Query(Token: config["Twitch:Token"], Logins: new[] {"tera_"}));
+var response = await mediator.Send(new Get.Query(Token: config["Twitch:Token"]!, Logins: new[] {"tera_"}));
 
 var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("{@Data}", response.Data);

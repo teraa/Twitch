@@ -5,7 +5,6 @@ using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
-using Xunit;
 
 namespace PubSub.Tests;
 

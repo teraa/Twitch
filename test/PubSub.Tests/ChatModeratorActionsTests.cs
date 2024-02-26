@@ -1,6 +1,5 @@
 using System;
 using Teraa.Twitch.PubSub.Messages.ChatModeratorActions;
-using Xunit;
 
 namespace PubSub.Tests;
 

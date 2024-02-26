@@ -1,6 +1,4 @@
-﻿using FluentAssertions;
-using Teraa.Twitch.PubSub.Messages.Shoutout;
-using Xunit;
+﻿using Teraa.Twitch.PubSub.Messages.Shoutout;
 
 namespace PubSub.Tests;
 

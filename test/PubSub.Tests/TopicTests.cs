@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
-using FluentAssertions;
 using Teraa.Twitch.PubSub.Topics;
-using Xunit;
 
 namespace PubSub.Tests;
 

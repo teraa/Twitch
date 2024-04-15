@@ -1,0 +1,38 @@
+{
+  "type": "low_trust_user_new_message",
+  "data": {
+    "low_trust_user": {
+      "id": "target_id",
+      "low_trust_id": "x",
+      "channel_id": "channel_id",
+      "sender": {
+        "user_id": "target_id",
+        "login": "target_login",
+        "display_name": "target_display"
+      },
+      "evaluated_at": "2023-11-21T09:42:02Z",
+      "updated_at": "2023-11-21T09:42:02Z",
+      "ban_evasion_evaluation": "POSSIBLE_EVADER",
+      "treatment": "ACTIVE_MONITORING",
+      "updated_by": {
+        "id": "",
+        "login": "",
+        "display_name": ""
+      },
+      "shared_ban_channel_ids": null,
+      "types": [
+        "DETECTED_BAN_EVADER"
+      ]
+    },
+    "message_content": {
+      "text": "lorem ipsum",
+      "fragments": [
+        {
+          "text": "lorem ipsum"
+        }
+      ]
+    },
+    "message_id": "00000000-0000-0000-0000-000000000000",
+    "sent_at": "2024-03-19T21:25:38Z"
+  }
+}

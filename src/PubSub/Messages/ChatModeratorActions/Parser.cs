@@ -473,6 +473,46 @@ public static class Parser
                         Login: createdBy));
                 return true;
 
+            case "warn" when
+                args is {Count: 2} &&
+                targetUserId is not null &&
+                targetUserLogin is not null &&
+                createdAt.HasValue &&
+                createdByUserId is not null &&
+                createdBy is not null:
+
+                result = new Warn(
+                    Action: moderationAction,
+                    Target: new User(
+                        Id: targetUserId,
+                        Login: targetUserLogin),
+                    Reason: args[1],
+                    CreatedAt: createdAt.Value,
+                    Initiator: new User(
+                        Id: createdByUserId,
+                        Login: createdBy
+                    ));
+                return true;
+
+            case "acknowledge_warning" when
+                targetUserId is not null &&
+                targetUserLogin is not null &&
+                createdAt.HasValue &&
+                createdByUserId is not null &&
+                createdBy is not null:
+
+                result = new WarnAcknowledge(
+                    Action: moderationAction,
+                    Target: new User(
+                        Id: targetUserId,
+                        Login: targetUserLogin),
+                    CreatedAt: createdAt.Value,
+                    Initiator: new User(
+                        Id: createdByUserId,
+                        Login: createdBy
+                    ));
+                return true;
+
             default:
                 result = null;
                 return false;

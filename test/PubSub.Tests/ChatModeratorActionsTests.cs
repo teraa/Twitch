@@ -461,4 +461,39 @@ public class ChatModeratorActionsTests : IClassFixture<SampleRepository>
         Assert.Equal("initiator.id", action.Initiator.Id);
         Assert.Equal("initiator.login", action.Initiator.Login);
     }
+
+    [Fact]
+    public void Warn()
+    {
+        using var json = _repository.GetJson("warn.json");
+        var success = Parser.TryParse(json, out var result);
+        Assert.True(success);
+        Assert.IsType<Warn>(result);
+        var action = (Warn)result!;
+
+        Assert.Equal("warn", action.Action);
+        Assert.Equal("target.id", action.Target.Id);
+        Assert.Equal("target.login", action.Target.Login);
+        Assert.Equal("reason", action.Reason);
+        Assert.Equal(new DateTimeOffset(2024, 1, 1, 0, 0, 0, TimeSpan.Zero), action.CreatedAt);
+        Assert.Equal("initiator.id", action.Initiator.Id);
+        Assert.Equal("initiator.login", action.Initiator.Login);
+    }
+
+    [Fact]
+    public void Warn_Acknowledge()
+    {
+        using var json = _repository.GetJson("warn_ack.json");
+        var success = Parser.TryParse(json, out var result);
+        Assert.True(success);
+        Assert.IsType<WarnAcknowledge>(result);
+        var action = (WarnAcknowledge)result!;
+
+        Assert.Equal("acknowledge_warning", action.Action);
+        Assert.Equal("target.id", action.Target.Id);
+        Assert.Equal("target.login", action.Target.Login);
+        Assert.Equal(new DateTimeOffset(2024, 1, 1, 0, 0, 0, TimeSpan.Zero), action.CreatedAt);
+        Assert.Equal("initiator.id", action.Initiator.Id);
+        Assert.Equal("initiator.login", action.Initiator.Login);
+    }
 }

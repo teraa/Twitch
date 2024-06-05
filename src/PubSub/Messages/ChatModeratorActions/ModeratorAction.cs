@@ -217,3 +217,18 @@ public record DeletePermittedTerm(
     string ChannelId,
     DateTimeOffset UpdatedAt
 ) : ITermModeratorAction;
+
+public record Warn(
+    string Action,
+    User Target,
+    string Reason,
+    DateTimeOffset CreatedAt,
+    User Initiator
+) : ITargetedModeratorAction;
+
+public record WarnAcknowledge(
+    string Action,
+    User Target,
+    DateTimeOffset CreatedAt,
+    User Initiator
+) : ITargetedModeratorAction;

@@ -338,6 +338,10 @@ public abstract class WsService : BackgroundService
             }
         }
         catch (OperationCanceledException) { }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Receiver invalid operation");
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Receiver error");

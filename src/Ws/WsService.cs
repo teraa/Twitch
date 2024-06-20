@@ -103,7 +103,6 @@ public abstract class WsService : BackgroundService
 
             // Cancel needed to await tasks inside StopInternalAsync
             _cts.Cancel();
-            _cts.Dispose();
             await StopInternalAsync(cancellationToken)
                 .ConfigureAwait(false);
         }

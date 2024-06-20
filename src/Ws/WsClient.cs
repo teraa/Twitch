@@ -96,7 +96,7 @@ public sealed class WsClient : IWsClient, IDisposable
             ms.Seek(0, SeekOrigin.Begin);
         }
 
-        string? message = await _sr.ReadLineAsync().ConfigureAwait(false);
+        string? message = await _sr.ReadLineAsync(cancellationToken).ConfigureAwait(false);
 
         if (_sr.EndOfStream)
         {

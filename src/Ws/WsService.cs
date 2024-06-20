@@ -102,7 +102,7 @@ public abstract class WsService : BackgroundService
                 .ConfigureAwait(false);
 
             // Cancel needed to await tasks inside StopInternalAsync
-            _cts.Cancel();
+            await _cts.CancelAsync();
             await StopInternalAsync(cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -224,7 +224,7 @@ public abstract class WsService : BackgroundService
             }
 
             IsReconnecting = true;
-            _cts.Cancel(); // TODO: this will run and throw sometimes when manually stopping
+            await _cts.CancelAsync(); // TODO: this will run and throw sometimes when manually stopping
             _cts.Dispose();
             _cts = new CancellationTokenSource();
             cancellationToken = _cts.Token;

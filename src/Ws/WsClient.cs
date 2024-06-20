@@ -81,8 +81,16 @@ public sealed class WsClient : IWsClient, IDisposable
             {
                 Memory<byte> buffer = writer.GetMemory(512);
 
-                result = await _client.ReceiveAsync(buffer, cancellationToken)
-                    .ConfigureAwait(false);
+                try
+                {
+                    result = await _client.ReceiveAsync(buffer, cancellationToken)
+                        .ConfigureAwait(false);
+                }
+                catch (WebSocketException ex)
+                    when (ex is {WebSocketErrorCode: WebSocketError.ConnectionClosedPrematurely})
+                {
+                    return ReceiveResult.Close;
+                }
 
                 writer.Advance(result.Count);
 

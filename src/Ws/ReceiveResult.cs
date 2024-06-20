@@ -8,6 +8,8 @@ public readonly struct ReceiveResult
         Message = message;
     }
 
+    public static ReceiveResult Close { get; } = new(true, null);
+
     public bool IsClose { get; }
     public string? Message { get; }
 }

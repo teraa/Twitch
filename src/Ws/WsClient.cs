@@ -87,7 +87,7 @@ public sealed class WsClient : IWsClient, IDisposable
                 writer.Advance(result.Count);
 
                 if (result.MessageType is WebSocketMessageType.Close)
-                    return new ReceiveResult(true, null);
+                    return ReceiveResult.Close;
             } while (!result.EndOfMessage);
 
             await writer.FlushAsync(cancellationToken)

@@ -23,7 +23,7 @@ public class PubSubServiceOptions : IWsServiceOptions
     public JsonSerializerOptions JsonSerializerOptions { get; set; } = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter() },
+        Converters = {new JsonStringEnumConverter()},
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
@@ -146,7 +146,12 @@ public class PubSubService : WsService, IPubSubClient
         }
     }
 
-    private async Task HandleMessageAsync(string rawTopic, string rawMessage, JsonDocument message, DateTimeOffset receivedAt, CancellationToken cancellationToken)
+    private async Task HandleMessageAsync(
+        string rawTopic,
+        string rawMessage,
+        JsonDocument message,
+        DateTimeOffset receivedAt,
+        CancellationToken cancellationToken)
     {
         if (!Topic.TryParse(rawTopic, out var topic))
         {
@@ -156,20 +161,25 @@ public class PubSubService : WsService, IPubSubClient
 
         switch (topic)
         {
-            case ChatModeratorActionsTopic t when Messages.ChatModeratorActions.Parser.TryParse(message, out var action):
+            case ChatModeratorActionsTopic t
+                when Messages.ChatModeratorActions.Parser.TryParse(message, out var action):
                 await PublishAsync(new ChatModeratorActionReceived(t, action, receivedAt), cancellationToken);
                 break;
 
-            case ChannelUnbanRequestsTopic t when Messages.ChannelUnbanRequests.Parser.TryParse(message, out var request):
+            case ChannelUnbanRequestsTopic t
+                when Messages.ChannelUnbanRequests.Parser.TryParse(message, out var request):
                 await PublishAsync(new ChannelUnbanRequestReceived(t, request, receivedAt), cancellationToken);
                 break;
 
-            case ShoutoutTopic t when Messages.Shoutout.Parser.TryParse(message, out var shoutout):
+            case ShoutoutTopic t
+                when Messages.Shoutout.Parser.TryParse(message, out var shoutout):
                 await PublishAsync(new ShoutoutReceived(t, shoutout, receivedAt), cancellationToken);
                 break;
 
-            case LowTrustUsersTopic t when Messages.LowTrustUsers.Parser.TryParse(message, out var treatmentUpdate):
-                await PublishAsync(new LowTrustUserTreatmentUpdateReceived(t, treatmentUpdate, receivedAt), cancellationToken);
+            case LowTrustUsersTopic t
+                when Messages.LowTrustUsers.Parser.TryParse(message, out var treatmentUpdate):
+                await PublishAsync(new LowTrustUserTreatmentUpdateReceived(t, treatmentUpdate, receivedAt),
+                    cancellationToken);
                 break;
 
             default:

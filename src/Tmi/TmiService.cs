@@ -28,8 +28,13 @@ public class TmiServiceOptions : IWsServiceOptions
     public TimeSpan MaxPongDelay { get; set; } = TimeSpan.FromSeconds(10);
 }
 
+public interface ITmiClient
+{
+    void EnqueueMessage(IMessage message);
+}
+
 [PublicAPI]
-public sealed class TmiService : WsService
+public sealed class TmiService : WsService, ITmiClient
 {
     private readonly TmiServiceOptions _options;
     private readonly ILogger<TmiService> _logger;

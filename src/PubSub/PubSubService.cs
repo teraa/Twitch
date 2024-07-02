@@ -32,8 +32,13 @@ public class PubSubServiceOptions : IWsServiceOptions
     public TimeSpan MaxPongDelay { get; set; } = TimeSpan.FromSeconds(10);
 }
 
+public interface IPubSubClient
+{
+    void EnqueueMessage(Payload message);
+}
+
 [PublicAPI]
-public class PubSubService : WsService
+public class PubSubService : WsService, IPubSubClient
 {
     private readonly PubSubServiceOptions _options;
     private readonly ILogger<PubSubService> _logger;

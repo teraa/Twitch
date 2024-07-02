@@ -13,6 +13,7 @@ public static class ServiceCollectionExtensions
         services.TryAddTransient<IWsClient, WsClient>();
         services.TryAddSingleton<PubSubService>();
         services.AddHostedService(sp => sp.GetRequiredService<PubSubService>());
+        services.TryAddSingleton<IPubSubClient>(sp => sp.GetRequiredService<PubSubService>());
 
         if (configureOptions is not null)
         {

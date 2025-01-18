@@ -20,7 +20,7 @@ public class TmiServiceOptions : IWsServiceOptions
     public IMessageParser MessageParser { get; set; } = new MessageParser
     {
         CommandParser = new FastCommandParser(),
-        TagsParser = new LazyTagsParser(),
+        TagsParser = new TagsParser(),
     };
 
     public TimeSpan PingInterval { get; set; } = TimeSpan.FromMinutes(4);

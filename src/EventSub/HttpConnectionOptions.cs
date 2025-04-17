@@ -5,7 +5,6 @@ using System.IO.Pipelines;
 using System.Net;
 using System.Net.WebSockets;
 using System.Security.Cryptography.X509Certificates;
-using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.Http.Connections.Client;
 
@@ -132,22 +131,9 @@ public class HttpConnectionOptions
     }
 
     /// <summary>
-    /// Gets or sets the URL used to send HTTP requests.
-    /// </summary>
-    public Uri? Url { get; set; }
-
-    /// <summary>
     /// Gets or sets a bitmask combining one or more <see cref="HttpTransportType"/> values that specify what transports the client should use to send HTTP requests.
     /// </summary>
     public HttpTransportType Transports { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether negotiation is skipped when connecting to the server.
-    /// </summary>
-    /// <remarks>
-    /// Negotiation can only be skipped when using the <see cref="HttpTransportType.WebSockets"/> transport.
-    /// </remarks>
-    public bool SkipNegotiation { get; set; }
 
     /// <summary>
     /// Gets or sets an access token provider that will be called to return a token for each HTTP request.
@@ -175,12 +161,6 @@ public class HttpConnectionOptions
     public bool? UseDefaultCredentials { get; set; }
 
     /// <summary>
-    /// Gets or sets the default <see cref="TransferFormat" /> to use if <see cref="HttpConnection.StartAsync(CancellationToken)"/>
-    /// is called instead of <see cref="HttpConnection.StartAsync(TransferFormat, CancellationToken)"/>.
-    /// </summary>
-    public TransferFormat DefaultTransferFormat { get; set; } = TransferFormat.Binary;
-
-    /// <summary>
     /// Gets or sets a delegate that will be invoked with the <see cref="ClientWebSocketOptions"/> object used
     /// to configure the WebSocket when using the WebSockets transport.
     /// </summary>
@@ -191,13 +171,4 @@ public class HttpConnectionOptions
     /// If <c>ClientWebSocketOptions.HttpVersion</c> is set to <c>2.0</c> or higher, some options like <see cref="ClientWebSocketOptions.Cookies"/> will not be applied. Instead use <see cref="Cookies"/> or the corresponding option on <see cref="HttpConnectionOptions"/>.
     /// </remarks>
     public Action<ClientWebSocketOptions>? WebSocketConfiguration { get; set; }
-
-    /// <summary>
-    /// Setting to enable Stateful Reconnect between client and server, this allows reconnecting that preserves messages sent while disconnected.
-    /// Also preserves the <see cref="HttpConnection.ConnectionId"/> when the reconnect is successful.
-    /// </summary>
-    /// <remarks>
-    /// Only works with WebSockets transport currently.
-    /// </remarks>
-    public bool UseStatefulReconnect { get; set; }
 }

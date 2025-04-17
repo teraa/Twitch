@@ -3,11 +3,7 @@
 // https://raw.githubusercontent.com/dotnet/dotnet/refs/heads/main/src/aspnetcore/src/SignalR/common/Shared/WebSocketExtensions.cs
 
 using System.Buffers;
-using System.Diagnostics;
 using System.Net.WebSockets;
-using System.Runtime.InteropServices;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Teraa.Twitch.EventSub;
 

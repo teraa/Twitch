@@ -1,36 +1,17 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System;
-using System.Buffers;
 using System.Diagnostics;
-using System.IO;
 using System.IO.Pipelines;
 using System.Net;
-using System.Net.Http;
-using System.Net.Sockets;
 using System.Net.WebSockets;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Text.Encodings.Web;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Connections;
-using Microsoft.AspNetCore.Connections.Abstractions;
-using Microsoft.AspNetCore.Shared;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.AspNetCore.Http.Connections.Client;
 using static Teraa.Twitch.EventSub.DuplexPipe;
+// ReSharper disable MethodHasAsyncOverload
 
 namespace Teraa.Twitch.EventSub;
-
-internal static class Constants
-{
-    public static readonly string UserAgentHeader = "";
-}
-
 
 internal sealed partial class WebSocketsTransport // : ITransport, IStatefulReconnectFeature
 {
@@ -42,7 +23,7 @@ internal sealed partial class WebSocketsTransport // : ITransport, IStatefulReco
     private volatile bool _aborted;
     private readonly HttpConnectionOptions _httpConnectionOptions;
     private readonly HttpClient? _httpClient;
-    private CancellationTokenSource _stopCts = default!;
+    private CancellationTokenSource _stopCts = null!;
     private bool _useStatefulReconnect;
 
     private IDuplexPipe? _transport;
@@ -51,7 +32,7 @@ internal sealed partial class WebSocketsTransport // : ITransport, IStatefulReco
     private bool _gracefulClose;
     private Func<PipeWriter, Task>? _notifyOnReconnect;
 
-    internal Task Running { get; private set; } = Task.CompletedTask;
+    private Task Running { get; set; } = Task.CompletedTask;
 
     public PipeReader Input => _transport!.Input;
 
@@ -78,8 +59,8 @@ internal sealed partial class WebSocketsTransport // : ITransport, IStatefulReco
         bool useStatefulReconnect = false)
     {
         _useStatefulReconnect = useStatefulReconnect;
-        _logger = loggerFactory?.CreateLogger(typeof(WebSocketsTransport)) ?? NullLogger.Instance;
-        _httpConnectionOptions = httpConnectionOptions ?? new HttpConnectionOptions();
+        _logger = loggerFactory.CreateLogger<WebSocketsTransport>();
+        _httpConnectionOptions = httpConnectionOptions;
 
         _closeTimeout = _httpConnectionOptions.CloseTimeout;
 
@@ -95,117 +76,111 @@ internal sealed partial class WebSocketsTransport // : ITransport, IStatefulReco
         var webSocket = new ClientWebSocket();
         var url = context.Uri;
 
-        if (context.Options != null)
+        if (context.Options.Headers.Count > 0)
         {
-            if (context.Options.Headers.Count > 0)
+            foreach (var header in context.Options.Headers)
             {
-                foreach (var header in context.Options.Headers)
-                {
-                    webSocket.Options.SetRequestHeader(header.Key, header.Value);
-                }
+                webSocket.Options.SetRequestHeader(header.Key, header.Value);
             }
+        }
 
-            var allowHttp2 = true;
+        var allowHttp2 = true;
 
-            if (context.Options.Cookies != null)
+        webSocket.Options.Cookies = context.Options.Cookies;
+
+        if (context.Options.ClientCertificates is { Count: > 0 })
+        {
+            webSocket.Options.ClientCertificates.AddRange(context.Options.ClientCertificates);
+        }
+
+        if (context.Options.Credentials != null)
+        {
+            webSocket.Options.Credentials = context.Options.Credentials;
+            // Negotiate Auth isn't supported over HTTP/2 and HttpClient does not gracefully fallback to HTTP/1.1 in that case
+            // https://github.com/dotnet/runtime/issues/1582
+            allowHttp2 = false;
+        }
+
+        var originalProxy = webSocket.Options.Proxy;
+        if (context.Options.Proxy != null)
+        {
+            webSocket.Options.Proxy = context.Options.Proxy;
+        }
+
+        if (context.Options.UseDefaultCredentials != null)
+        {
+            webSocket.Options.UseDefaultCredentials = context.Options.UseDefaultCredentials.Value;
+            if (context.Options.UseDefaultCredentials.Value)
             {
-                webSocket.Options.Cookies = context.Options.Cookies;
-            }
-
-            if (context.Options.ClientCertificates is { Count: > 0 })
-            {
-                webSocket.Options.ClientCertificates.AddRange(context.Options.ClientCertificates);
-            }
-
-            if (context.Options.Credentials != null)
-            {
-                webSocket.Options.Credentials = context.Options.Credentials;
                 // Negotiate Auth isn't supported over HTTP/2 and HttpClient does not gracefully fallback to HTTP/1.1 in that case
                 // https://github.com/dotnet/runtime/issues/1582
                 allowHttp2 = false;
             }
+        }
 
-            var originalProxy = webSocket.Options.Proxy;
-            if (context.Options.Proxy != null)
+        context.Options.WebSocketConfiguration?.Invoke(webSocket.Options);
+
+        if (webSocket.Options.HttpVersion >= HttpVersion.Version20 && allowHttp2)
+        {
+            // Reset options we set on the users' behalf since they are already on the HttpClient that we're passing to ConnectAsync
+            // And ConnectAsync will throw if these options are set on the ClientWebSocketOptions
+            if (ReferenceEquals(webSocket.Options.Cookies, context.Options.Cookies))
             {
-                webSocket.Options.Proxy = context.Options.Proxy;
+                webSocket.Options.Cookies = null;
             }
-
-            if (context.Options.UseDefaultCredentials != null)
+            if (IsX509CertificateCollectionEqual(webSocket.Options.ClientCertificates, context.Options.ClientCertificates))
             {
-                webSocket.Options.UseDefaultCredentials = context.Options.UseDefaultCredentials.Value;
-                if (context.Options.UseDefaultCredentials.Value)
-                {
-                    // Negotiate Auth isn't supported over HTTP/2 and HttpClient does not gracefully fallback to HTTP/1.1 in that case
-                    // https://github.com/dotnet/runtime/issues/1582
-                    allowHttp2 = false;
-                }
+                webSocket.Options.ClientCertificates.Clear();
             }
-
-            context.Options.WebSocketConfiguration?.Invoke(webSocket.Options);
-
-            if (webSocket.Options.HttpVersion >= HttpVersion.Version20 && allowHttp2)
+            if (ReferenceEquals(webSocket.Options.Credentials, context.Options.Credentials))
             {
-                // Reset options we set on the users' behalf since they are already on the HttpClient that we're passing to ConnectAsync
-                // And ConnectAsync will throw if these options are set on the ClientWebSocketOptions
-                if (ReferenceEquals(webSocket.Options.Cookies, context.Options.Cookies))
-                {
-                    webSocket.Options.Cookies = null;
-                }
-                if (IsX509CertificateCollectionEqual(webSocket.Options.ClientCertificates, context.Options.ClientCertificates))
-                {
-                    webSocket.Options.ClientCertificates.Clear();
-                }
-                if (ReferenceEquals(webSocket.Options.Credentials, context.Options.Credentials))
-                {
-                    webSocket.Options.Credentials = null;
-                }
-                if (webSocket.Options.UseDefaultCredentials == (context.Options.UseDefaultCredentials ?? false))
-                {
-                    webSocket.Options.UseDefaultCredentials = false;
-                }
-                if (ReferenceEquals(webSocket.Options.Proxy, context.Options.Proxy))
-                {
-                    webSocket.Options.Proxy = originalProxy;
-                }
+                webSocket.Options.Credentials = null;
             }
-
-            if (!allowHttp2 && webSocket.Options.HttpVersion >= HttpVersion.Version20)
+            if (webSocket.Options.UseDefaultCredentials == (context.Options.UseDefaultCredentials ?? false))
             {
-                // We shouldn't fallback to HTTP/1.1 if the user explicitly states
-                if (webSocket.Options.HttpVersionPolicy == HttpVersionPolicy.RequestVersionOrLower)
-                {
-                    webSocket.Options.HttpVersion = HttpVersion.Version11;
-                }
-                else
-                {
-                    throw new InvalidOperationException("Negotiate Authentication doesn't work with HTTP/2 or higher.");
-                }
+                webSocket.Options.UseDefaultCredentials = false;
             }
-
-            static bool IsX509CertificateCollectionEqual(X509CertificateCollection? left, X509CertificateCollection? right)
+            if (ReferenceEquals(webSocket.Options.Proxy, context.Options.Proxy))
             {
-                var leftCount = left?.Count ?? 0;
-                var rightCount = right?.Count ?? 0;
-                if (leftCount == rightCount)
+                webSocket.Options.Proxy = originalProxy;
+            }
+        }
+
+        if (!allowHttp2 && webSocket.Options.HttpVersion >= HttpVersion.Version20)
+        {
+            // We shouldn't fallback to HTTP/1.1 if the user explicitly states
+            if (webSocket.Options.HttpVersionPolicy == HttpVersionPolicy.RequestVersionOrLower)
+            {
+                webSocket.Options.HttpVersion = HttpVersion.Version11;
+            }
+            else
+            {
+                throw new InvalidOperationException("Negotiate Authentication doesn't work with HTTP/2 or higher.");
+            }
+        }
+
+        static bool IsX509CertificateCollectionEqual(X509CertificateCollection? left, X509CertificateCollection? right)
+        {
+            var leftCount = left?.Count ?? 0;
+            var rightCount = right?.Count ?? 0;
+            if (leftCount == rightCount)
+            {
+                for (var i = 0; i < rightCount; ++i)
                 {
-                    for (var i = 0; i < rightCount; ++i)
+                    if (!ReferenceEquals(left![i], right![i]))
                     {
-                        if (!ReferenceEquals(left![i], right![i]))
-                        {
-                            return false;
-                        }
+                        return false;
                     }
-                    return true;
                 }
-
-                return false;
+                return true;
             }
+
+            return false;
         }
 
         if (_httpConnectionOptions.AccessTokenProvider != null
             && webSocket.Options.HttpVersion < HttpVersion.Version20
-            )
+           )
         {
             // Apply access token logic when using HTTP/1.1 because we don't use the AccessTokenHttpMessageHandler via HttpClient unless the user specifies HTTP/2.0 or higher
             var accessToken = await _httpConnectionOptions.AccessTokenProvider().ConfigureAwait(false);
@@ -361,7 +336,7 @@ internal sealed partial class WebSocketsTransport // : ITransport, IStatefulReco
                 try
                 {
                     await StartAsync(url, _webSocketMessageType == WebSocketMessageType.Binary ? TransferFormat.Binary : TransferFormat.Text,
-                        cancellationToken: default).ConfigureAwait(false);
+                        cancellationToken: CancellationToken.None).ConfigureAwait(false);
                     cleanup = false;
                 }
                 catch (Exception ex)
@@ -575,14 +550,13 @@ internal sealed partial class WebSocketsTransport // : ITransport, IStatefulReco
     private static Uri ResolveWebSocketsUrl(Uri url)
     {
         var uriBuilder = new UriBuilder(url);
-        if (url.Scheme == "http")
+
+        uriBuilder.Scheme = url.Scheme switch
         {
-            uriBuilder.Scheme = "ws";
-        }
-        else if (url.Scheme == "https")
-        {
-            uriBuilder.Scheme = "wss";
-        }
+            "http" => "ws",
+            "https" => "wss",
+            _ => uriBuilder.Scheme,
+        };
 
         return uriBuilder.Uri;
     }

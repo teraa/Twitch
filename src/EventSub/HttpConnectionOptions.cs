@@ -26,10 +26,6 @@ public class HttpConnectionOptions
     private IDictionary<string, string> _headers;
     private X509CertificateCollection? _clientCertificates;
     private CookieContainer _cookies;
-    private ICredentials? _credentials;
-    private IWebProxy? _proxy;
-    private bool? _useDefaultCredentials;
-    private Action<ClientWebSocketOptions>? _webSocketConfiguration;
     private PipeOptions? _transportPipeOptions;
     private PipeOptions? _appPipeOptions;
     private long _transportMaxBufferSize;
@@ -47,11 +43,7 @@ public class HttpConnectionOptions
     {
         _headers = new Dictionary<string, string>();
 
-        // System.Security.Cryptography isn't supported on WASM currently
-        if (!OperatingSystem.IsBrowser())
-        {
-            _clientCertificates = new X509CertificateCollection();
-        }
+        _clientCertificates = new X509CertificateCollection();
 
         _cookies = new CookieContainer();
 
@@ -131,37 +123,19 @@ public class HttpConnectionOptions
     /// <summary>
     /// Gets or sets a collection of client certificates that will be sent with HTTP requests.
     /// </summary>
-    [UnsupportedOSPlatform("browser")]
     public X509CertificateCollection? ClientCertificates
     {
-        get
-        {
-            ThrowIfUnsupportedPlatform();
-            return _clientCertificates;
-        }
-        set
-        {
-            ThrowIfUnsupportedPlatform();
-            _clientCertificates = value ?? throw new ArgumentNullException(nameof(value));
-        }
+        get => _clientCertificates;
+        set => _clientCertificates = value ?? throw new ArgumentNullException(nameof(value));
     }
 
     /// <summary>
     /// Gets or sets a collection of cookies that will be sent with HTTP requests.
     /// </summary>
-    [UnsupportedOSPlatform("browser")]
     public CookieContainer Cookies
     {
-        get
-        {
-            ThrowIfUnsupportedPlatform();
-            return _cookies;
-        }
-        set
-        {
-            ThrowIfUnsupportedPlatform();
-            _cookies = value ?? throw new ArgumentNullException(nameof(value));
-        }
+        get => _cookies;
+        set => _cookies = value ?? throw new ArgumentNullException(nameof(value));
     }
 
     /// <summary>
@@ -195,56 +169,17 @@ public class HttpConnectionOptions
     /// <summary>
     /// Gets or sets the credentials used when making HTTP requests.
     /// </summary>
-    [UnsupportedOSPlatform("browser")]
-    public ICredentials? Credentials
-    {
-        get
-        {
-            ThrowIfUnsupportedPlatform();
-            return _credentials;
-        }
-        set
-        {
-            ThrowIfUnsupportedPlatform();
-            _credentials = value;
-        }
-    }
+    public ICredentials? Credentials { get; set; }
 
     /// <summary>
     /// Gets or sets the proxy used when making HTTP requests.
     /// </summary>
-    [UnsupportedOSPlatform("browser")]
-    public IWebProxy? Proxy
-    {
-        get
-        {
-            ThrowIfUnsupportedPlatform();
-            return _proxy;
-        }
-        set
-        {
-            ThrowIfUnsupportedPlatform();
-            _proxy = value;
-        }
-    }
+    public IWebProxy? Proxy { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether default credentials are used when making HTTP requests.
     /// </summary>
-    [UnsupportedOSPlatform("browser")]
-    public bool? UseDefaultCredentials
-    {
-        get
-        {
-            ThrowIfUnsupportedPlatform();
-            return _useDefaultCredentials;
-        }
-        set
-        {
-            ThrowIfUnsupportedPlatform();
-            _useDefaultCredentials = value;
-        }
-    }
+    public bool? UseDefaultCredentials { get; set; }
 
     /// <summary>
     /// Gets or sets the default <see cref="TransferFormat" /> to use if <see cref="HttpConnection.StartAsync(CancellationToken)"/>
@@ -262,20 +197,7 @@ public class HttpConnectionOptions
     /// <para />
     /// If <c>ClientWebSocketOptions.HttpVersion</c> is set to <c>2.0</c> or higher, some options like <see cref="ClientWebSocketOptions.Cookies"/> will not be applied. Instead use <see cref="Cookies"/> or the corresponding option on <see cref="HttpConnectionOptions"/>.
     /// </remarks>
-    [UnsupportedOSPlatform("browser")]
-    public Action<ClientWebSocketOptions>? WebSocketConfiguration
-    {
-        get
-        {
-            ThrowIfUnsupportedPlatform();
-            return _webSocketConfiguration;
-        }
-        set
-        {
-            ThrowIfUnsupportedPlatform();
-            _webSocketConfiguration = value;
-        }
-    }
+    public Action<ClientWebSocketOptions>? WebSocketConfiguration { get; set; }
 
     /// <summary>
     /// Setting to enable Stateful Reconnect between client and server, this allows reconnecting that preserves messages sent while disconnected.
@@ -285,12 +207,4 @@ public class HttpConnectionOptions
     /// Only works with WebSockets transport currently.
     /// </remarks>
     public bool UseStatefulReconnect { get; set; }
-
-    private static void ThrowIfUnsupportedPlatform()
-    {
-        if (OperatingSystem.IsBrowser())
-        {
-            throw new PlatformNotSupportedException();
-        }
-    }
 }

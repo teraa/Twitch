@@ -34,7 +34,7 @@ public sealed partial class WebSocketsTransport // : ITransport, IStatefulReconn
     private bool _startCalled;
     private readonly Lock _lock = new();
 
-    private Task Running { get; set; } = Task.CompletedTask;
+    public Task Running { get; private set; } = Task.CompletedTask;
 
     public PipeReader Input => _transport!.Input;
 

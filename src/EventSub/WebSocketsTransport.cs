@@ -31,6 +31,7 @@ public sealed partial class WebSocketsTransport // : ITransport, IStatefulReconn
     // The assumption is that a graceful close was triggered purposefully by either the client or server and a reconnect shouldn't occur
     private bool _gracefulClose;
     private Func<PipeWriter, Task>? _notifyOnReconnect;
+    private bool _startCalled;
     private readonly Lock _lock = new();
 
     private Task Running { get; set; } = Task.CompletedTask;
@@ -215,6 +216,14 @@ public sealed partial class WebSocketsTransport // : ITransport, IStatefulReconn
 
     public async Task StartAsync(Uri url, TransferFormat transferFormat, CancellationToken cancellationToken = default)
     {
+        lock (_lock)
+        {
+            if (_startCalled)
+                throw new InvalidOperationException("Start already called.");
+
+            _startCalled = true;
+        }
+
         ArgumentNullException.ThrowIfNull(url);
 
         if (transferFormat != TransferFormat.Binary && transferFormat != TransferFormat.Text)
@@ -335,6 +344,11 @@ public sealed partial class WebSocketsTransport // : ITransport, IStatefulReconn
             {
                 try
                 {
+                    lock (_lock)
+                    {
+                        _startCalled = false;
+                    }
+
                     await StartAsync(url, _webSocketMessageType == WebSocketMessageType.Binary ? TransferFormat.Binary : TransferFormat.Text,
                         cancellationToken: CancellationToken.None).ConfigureAwait(false);
                     cleanup = false;
@@ -596,6 +610,11 @@ public sealed partial class WebSocketsTransport // : ITransport, IStatefulReconn
         {
             _webSocket?.Dispose();
             _stopCts.Dispose();
+
+            lock (_lock)
+            {
+                _startCalled = false;
+            }
         }
 
         Log.TransportStopped(_logger, null);

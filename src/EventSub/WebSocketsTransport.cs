@@ -542,9 +542,10 @@ internal sealed partial class WebSocketsTransport // : ITransport, IStatefulReco
 
     private static bool WebSocketCanSend(WebSocket ws)
     {
-        return !(ws.State == WebSocketState.Aborted ||
-               ws.State == WebSocketState.Closed ||
-               ws.State == WebSocketState.CloseSent);
+        return ws.State is not (
+            WebSocketState.Aborted or
+            WebSocketState.Closed or
+            WebSocketState.CloseSent);
     }
 
     private static Uri ResolveWebSocketsUrl(Uri url)

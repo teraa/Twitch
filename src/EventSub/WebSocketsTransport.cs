@@ -56,7 +56,7 @@ public sealed partial class WebSocketsTransport // : ITransport, IStatefulReconn
         }
     }
 
-    public WebSocketsTransport(HttpConnectionOptions httpConnectionOptions, ILoggerFactory loggerFactory, Func<Task<string?>> accessTokenProvider, HttpClient? httpClient,
+    public WebSocketsTransport(HttpConnectionOptions httpConnectionOptions, ILoggerFactory loggerFactory, HttpClient? httpClient,
         bool useStatefulReconnect = false)
     {
         _useStatefulReconnect = useStatefulReconnect;
@@ -64,10 +64,6 @@ public sealed partial class WebSocketsTransport // : ITransport, IStatefulReconn
         _httpConnectionOptions = httpConnectionOptions;
 
         _closeTimeout = _httpConnectionOptions.CloseTimeout;
-
-        // We were given an updated delegate from the HttpConnection and we are updating what we have in httpOptions
-        // options itself is copied object of user's options
-        _httpConnectionOptions.AccessTokenProvider = accessTokenProvider;
 
         _httpClient = httpClient;
     }

@@ -18,7 +18,7 @@ public sealed partial class WebSocketsTransport // : ITransport, IStatefulReconn
     private WebSocket? _webSocket;
     private IDuplexPipe? _application;
     private WebSocketMessageType _webSocketMessageType;
-    private readonly ILogger _logger;
+    private readonly ILogger<WebSocketsTransport> _logger;
     private readonly TimeSpan _closeTimeout;
     private volatile bool _aborted;
     private readonly HttpConnectionOptions _httpConnectionOptions;
@@ -56,11 +56,14 @@ public sealed partial class WebSocketsTransport // : ITransport, IStatefulReconn
         }
     }
 
-    public WebSocketsTransport(HttpConnectionOptions httpConnectionOptions, ILoggerFactory loggerFactory, HttpClient? httpClient,
+    public WebSocketsTransport(
+        HttpConnectionOptions httpConnectionOptions,
+        ILogger<WebSocketsTransport> logger,
+        HttpClient? httpClient,
         bool useStatefulReconnect = false)
     {
         _useStatefulReconnect = useStatefulReconnect;
-        _logger = loggerFactory.CreateLogger<WebSocketsTransport>();
+        _logger = logger;
         _httpConnectionOptions = httpConnectionOptions;
 
         _closeTimeout = _httpConnectionOptions.CloseTimeout;

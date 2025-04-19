@@ -13,7 +13,7 @@ using static Teraa.Twitch.EventSub.DuplexPipe;
 
 namespace Teraa.Twitch.EventSub;
 
-internal sealed partial class WebSocketsTransport // : ITransport, IStatefulReconnectFeature
+public sealed partial class WebSocketsTransport // : ITransport, IStatefulReconnectFeature
 {
     private WebSocket? _webSocket;
     private IDuplexPipe? _application;

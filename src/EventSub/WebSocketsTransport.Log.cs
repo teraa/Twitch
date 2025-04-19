@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Teraa.Twitch.EventSub;
 
-internal sealed partial class WebSocketsTransport
+public sealed partial class WebSocketsTransport
 {
     private static partial class Log
     {

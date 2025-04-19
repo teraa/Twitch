@@ -31,6 +31,7 @@ internal sealed partial class WebSocketsTransport // : ITransport, IStatefulReco
     // The assumption is that a graceful close was triggered purposefully by either the client or server and a reconnect shouldn't occur
     private bool _gracefulClose;
     private Func<PipeWriter, Task>? _notifyOnReconnect;
+    private readonly Lock _lock = new();
 
     private Task Running { get; set; } = Task.CompletedTask;
 
@@ -603,7 +604,7 @@ internal sealed partial class WebSocketsTransport // : ITransport, IStatefulReco
 
     private bool UpdateConnectionPair()
     {
-        lock (this)
+        lock (_lock)
         {
             // Lock and check _useStatefulReconnect, we want to swap the Pipe completely before DisableReconnect returns if there is contention there.
             // The calling code will start completing the transport after DisableReconnect
@@ -629,7 +630,7 @@ internal sealed partial class WebSocketsTransport // : ITransport, IStatefulReco
 
     public void DisableReconnect()
     {
-        lock (this)
+        lock (_lock)
         {
             _useStatefulReconnect = false;
         }

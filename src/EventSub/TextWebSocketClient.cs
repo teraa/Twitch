@@ -71,7 +71,7 @@ public sealed class TextWebSocketClient : IDisposable
             ValueWebSocketReceiveResult result;
             do
             {
-                Memory<byte> buffer = writer.GetMemory(512);
+                Memory<byte> buffer = writer.GetMemory();
 
                 try
                 {

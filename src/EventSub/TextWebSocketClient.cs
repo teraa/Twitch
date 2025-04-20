@@ -6,8 +6,10 @@ using JetBrains.Annotations;
 
 namespace Teraa.Twitch.EventSub;
 
+public interface ITextWebSocketClient { }
+
 [PublicAPI]
-public sealed class TextWebSocketClient : IDisposable
+public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
 {
     private ClientWebSocket _client;
     private StreamReader? _sr;

@@ -29,14 +29,9 @@ public sealed class TextWebSocketClient : IDisposable
     {
         try
         {
-            // Other states not covered: Connecting, Closed, Aborted.
-            // Connecting state will only ever happen during the call to ConnectAsync, never before nor after.
-            // If it's Closed or Aborted then we don't need to do anything anyway.
-            if (_client.State is not (
-                WebSocketState.Open or
-                WebSocketState.CloseReceived or
-                WebSocketState.CloseSent))
+            if (_client.State is WebSocketState.Closed or WebSocketState.Aborted)
             {
+                // We don't need to do any cleaning up
                 return;
             }
 

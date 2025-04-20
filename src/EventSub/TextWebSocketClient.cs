@@ -50,7 +50,7 @@ public sealed class TextWebSocketClient : IDisposable
                 // This will send a message to close the socket. If we're sending something else concurrently,
                 // one of the two calls will throw because that is not a supported operation.
                 // So we use a semaphore to synchronize these calls.
-                await _client.CloseAsync(WebSocketCloseStatus.NormalClosure, null, cancellationToken)
+                await _client.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, null, cancellationToken)
                     .ConfigureAwait(false);
             }
             finally

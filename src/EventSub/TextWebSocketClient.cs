@@ -65,6 +65,41 @@ public sealed class TextWebSocketClient : IDisposable
         }
     }
 
+    /// <summary>
+    /// Calls ReceiveAsync until we reach end of message or the connection gets closed.
+    /// </summary>
+    private async Task<ReceiveResultType> ReceiveMessage(PipeWriter writer, CancellationToken cancellationToken)
+    {
+        ValueWebSocketReceiveResult result;
+        do
+        {
+            Memory<byte> buffer = writer.GetMemory();
+
+            try
+            {
+                result = await _client.ReceiveAsync(buffer, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (WebSocketException ex)
+                when (ex is {WebSocketErrorCode: WebSocketError.ConnectionClosedPrematurely})
+            {
+                return ReceiveResultType.ClosedUnexpectedly;
+            }
+
+            writer.Advance(result.Count);
+
+            if (result.MessageType is WebSocketMessageType.Close)
+            {
+                return ReceiveResultType.CloseMessageReceived;
+            }
+        } while (!result.EndOfMessage);
+
+        return ReceiveResultType.Regular;
+    }
+
+    /// <summary>
+    /// Receives a message until the end of line.
+    /// </summary>
     public async Task<ReceiveResult> ReceiveAsync(CancellationToken cancellationToken = default)
     {
         if (_sr is null)
@@ -77,44 +112,40 @@ public sealed class TextWebSocketClient : IDisposable
 
             PipeWriter writer = PipeWriter.Create(ms);
 
-            ValueWebSocketReceiveResult result;
-            do
+            var result = await ReceiveMessage(writer, cancellationToken);
+
+            if (result is
+                ReceiveResultType.ClosedUnexpectedly or
+                ReceiveResultType.CloseMessageReceived)
             {
-                Memory<byte> buffer = writer.GetMemory();
+                // We're entering one of the close states and there is only (possibly) incomplete data
+                // that we already received, so we will discard this data and dispose of the stream.
+                // The stream might be null here in case we got here by calling DisconnectAsync.
+                _sr?.Dispose();
+                _sr = null;
 
-                try
-                {
-                    result = await _client.ReceiveAsync(buffer, cancellationToken)
-                        .ConfigureAwait(false);
-                }
-                catch (WebSocketException ex)
-                    when (ex is {WebSocketErrorCode: WebSocketError.ConnectionClosedPrematurely})
-                {
-                    return ReceiveResult.Close;
-                }
-
-                writer.Advance(result.Count);
-
-                if (result.MessageType is WebSocketMessageType.Close)
-                    return ReceiveResult.Close;
-            } while (!result.EndOfMessage);
+                return new ReceiveResult(result, null);
+            }
 
             await writer.FlushAsync(cancellationToken)
                 .ConfigureAwait(false);
 
+            // We're done writing to the stream with pipe writer,
+            // seek to the beginning before reading with stream reader.
             ms.Seek(0, SeekOrigin.Begin);
         }
 
         // New line delimited messages. We may receive multiple text messages in a single websocket message.
         string? message = await _sr.ReadLineAsync(cancellationToken).ConfigureAwait(false);
 
+        // We won't be using this stream anymore if we reached its end.
         if (_sr.EndOfStream)
         {
             _sr.Dispose();
             _sr = null;
         }
 
-        return new ReceiveResult(false, message);
+        return new ReceiveResult(ReceiveResultType.Regular, message);
     }
 
     public async Task SendAsync(string message, CancellationToken cancellationToken = default)
@@ -151,8 +182,15 @@ public sealed class TextWebSocketClient : IDisposable
     }
 
 
-    public readonly record struct ReceiveResult(bool IsClose, string? Message)
+    public enum ReceiveResultType
     {
-        public static ReceiveResult Close { get; } = new(true, null);
+        Regular,
+        CloseMessageReceived,
+        ClosedUnexpectedly,
     }
+
+    public readonly record struct ReceiveResult(
+        ReceiveResultType Type,
+        string? Message
+    );
 }

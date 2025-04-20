@@ -9,19 +9,36 @@ namespace Teraa.Twitch.EventSub;
 [PublicAPI]
 public sealed class TextWebSocketClient : IDisposable
 {
-    private readonly ClientWebSocket _client;
+    private ClientWebSocket _client;
     private StreamReader? _sr;
     private readonly SemaphoreSlim _sendSem = new(1, 1);
+    private readonly Func<ClientWebSocket> _clientFactory;
+    private readonly Lock _stateLock = new();
+    private bool _gracefulClose;
 
-    public TextWebSocketClient(ClientWebSocket client)
+    public TextWebSocketClient(Func<ClientWebSocket> clientFactory)
     {
-        _client = client;
+        _client = clientFactory();
+        _clientFactory = clientFactory;
     }
 
     public Encoding Encoding { get; set; } = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
 
     public async Task ConnectAsync(Uri uri, CancellationToken cancellationToken = default)
     {
+        lock (_stateLock)
+        {
+            if (!_gracefulClose)
+            {
+                // We can only reuse a client if we completed a graceful close
+                _client.Dispose();
+                _client = _clientFactory();
+            }
+
+            // Reset state
+            _gracefulClose = false;
+        }
+
         await _client.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
     }
 
@@ -43,6 +60,12 @@ public sealed class TextWebSocketClient : IDisposable
                 // So we use a semaphore to synchronize these calls.
                 await _client.CloseAsync(WebSocketCloseStatus.NormalClosure, null, cancellationToken)
                     .ConfigureAwait(false);
+
+                // If the Close call above succeeded, it means we completed it gracefully.
+                lock (_stateLock)
+                {
+                    _gracefulClose = true;
+                }
             }
             finally
             {

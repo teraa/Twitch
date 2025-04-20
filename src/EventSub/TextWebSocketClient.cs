@@ -127,12 +127,18 @@ public sealed class TextWebSocketClient : IDisposable
             Encoding.GetBytes(message, segment);
 
             await _sendSem.WaitAsync(cancellationToken).ConfigureAwait(false);
-            await _client.SendAsync(segment, WebSocketMessageType.Text, true, cancellationToken)
-                .ConfigureAwait(false);
+            try
+            {
+                await _client.SendAsync(segment, WebSocketMessageType.Text, true, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            finally
+            {
+                _sendSem.Release();
+            }
         }
         finally
         {
-            _sendSem.Release();
             ArrayPool<byte>.Shared.Return(buffer);
         }
     }

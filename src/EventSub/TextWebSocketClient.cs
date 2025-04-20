@@ -14,7 +14,6 @@ public sealed class TextWebSocketClient : IDisposable
     private readonly SemaphoreSlim _sendSem = new(1, 1);
     private readonly Func<ClientWebSocket> _clientFactory;
     private readonly Lock _stateLock = new();
-    private bool _gracefulClose;
 
     public TextWebSocketClient(Func<ClientWebSocket> clientFactory)
     {
@@ -28,15 +27,8 @@ public sealed class TextWebSocketClient : IDisposable
     {
         lock (_stateLock)
         {
-            if (!_gracefulClose)
-            {
-                // We can only reuse a client if we completed a graceful close
-                _client.Dispose();
-                _client = _clientFactory();
-            }
-
-            // Reset state
-            _gracefulClose = false;
+            _client.Dispose();
+            _client = _clientFactory();
         }
 
         await _client.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
@@ -60,12 +52,6 @@ public sealed class TextWebSocketClient : IDisposable
                 // So we use a semaphore to synchronize these calls.
                 await _client.CloseAsync(WebSocketCloseStatus.NormalClosure, null, cancellationToken)
                     .ConfigureAwait(false);
-
-                // If the Close call above succeeded, it means we completed it gracefully.
-                lock (_stateLock)
-                {
-                    _gracefulClose = true;
-                }
             }
             finally
             {

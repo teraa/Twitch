@@ -3,6 +3,7 @@ using System.IO.Pipelines;
 using System.Net.WebSockets;
 using System.Text;
 using JetBrains.Annotations;
+using Microsoft.Extensions.Logging;
 
 namespace Teraa.Twitch.EventSub;
 
@@ -16,17 +17,22 @@ public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
     private readonly SemaphoreSlim _sendSem = new(1, 1);
     private readonly Func<ClientWebSocket> _clientFactory;
     private readonly Lock _stateLock = new();
+    private readonly ILogger<TextWebSocketClient> _logger;
 
-    public TextWebSocketClient(Func<ClientWebSocket> clientFactory)
+    public TextWebSocketClient(
+        Func<ClientWebSocket> clientFactory,
+        ILogger<TextWebSocketClient> logger)
     {
         _client = clientFactory();
         _clientFactory = clientFactory;
+        _logger = logger;
     }
 
     public Encoding Encoding { get; set; } = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
 
     public async Task ConnectAsync(Uri uri, CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Connecting to {Uri}", uri);
         lock (_stateLock)
         {
             _client.Dispose();
@@ -34,15 +40,18 @@ public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
         }
 
         await _client.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
+        _logger.LogInformation("Connected to {Uri}", uri);
     }
 
     public async Task DisconnectAsync(CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("Closing WebSocket");
         try
         {
             if (_client.State is WebSocketState.Closed or WebSocketState.Aborted)
             {
                 // We don't need to do any cleaning up
+                _logger.LogDebug("WebSocket already closed ({State})", _client.State);
                 return;
             }
 
@@ -54,6 +63,8 @@ public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
                 // So we use a semaphore to synchronize these calls.
                 await _client.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, null, cancellationToken)
                     .ConfigureAwait(false);
+
+                _logger.LogDebug("Sent close frame");
             }
             finally
             {
@@ -79,12 +90,21 @@ public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
 
             try
             {
+                _logger.LogDebug("Receiving a new message");
+
                 result = await _client.ReceiveAsync(buffer, cancellationToken)
                     .ConfigureAwait(false);
+
+                _logger.LogDebug("Received message, type: {MessageType}, size: {Count}, EndOfMessage: {EndOfMessage}",
+                    result.MessageType,
+                    result.Count,
+                    result.EndOfMessage
+                );
             }
             catch (WebSocketException ex)
                 when (ex is {WebSocketErrorCode: WebSocketError.ConnectionClosedPrematurely})
             {
+                _logger.LogDebug("WebSocket connection closed prematurely");
                 return ReceiveResultType.ClosedUnexpectedly;
             }
 
@@ -136,6 +156,10 @@ public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
             // seek to the beginning before reading with stream reader.
             ms.Seek(0, SeekOrigin.Begin);
         }
+        else
+        {
+            _logger.LogDebug("Consuming previously received message");
+        }
 
         // New line delimited messages. We may receive multiple text messages in a single websocket message.
         string? message = await _sr.ReadLineAsync(cancellationToken).ConfigureAwait(false);
@@ -143,6 +167,7 @@ public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
         // We won't be using this stream anymore if we reached its end.
         if (_sr.EndOfStream)
         {
+            _logger.LogDebug("Reached end of message");
             _sr.Dispose();
             _sr = null;
         }
@@ -164,6 +189,8 @@ public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
             {
                 await _client.SendAsync(segment, WebSocketMessageType.Text, true, cancellationToken)
                     .ConfigureAwait(false);
+
+                _logger.LogDebug("Sent a message of {Count} bytes", length);
             }
             finally
             {

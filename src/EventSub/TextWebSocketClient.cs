@@ -81,7 +81,7 @@ public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
     /// <summary>
     /// Calls ReceiveAsync until we reach end of message or the connection gets closed.
     /// </summary>
-    private async Task<ReceiveResultType> ReceiveMessage(PipeWriter writer, CancellationToken cancellationToken)
+    private async Task<TextWebSocketReceiveResultType> ReceiveMessage(PipeWriter writer, CancellationToken cancellationToken)
     {
         ValueWebSocketReceiveResult result;
         do
@@ -105,24 +105,24 @@ public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
                 when (ex is {WebSocketErrorCode: WebSocketError.ConnectionClosedPrematurely})
             {
                 _logger.LogDebug("WebSocket connection closed prematurely");
-                return ReceiveResultType.ClosedUnexpectedly;
+                return TextWebSocketReceiveResultType.ClosedUnexpectedly;
             }
 
             writer.Advance(result.Count);
 
             if (result.MessageType is WebSocketMessageType.Close)
             {
-                return ReceiveResultType.CloseMessageReceived;
+                return TextWebSocketReceiveResultType.CloseMessageReceived;
             }
         } while (!result.EndOfMessage);
 
-        return ReceiveResultType.Regular;
+        return TextWebSocketReceiveResultType.Regular;
     }
 
     /// <summary>
     /// Receives a message until the end of line.
     /// </summary>
-    public async Task<ReceiveResult> ReceiveAsync(CancellationToken cancellationToken = default)
+    public async Task<TextWebSocketReceiveResult> ReceiveAsync(CancellationToken cancellationToken = default)
     {
         if (_sr is null)
         {
@@ -137,8 +137,8 @@ public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
             var result = await ReceiveMessage(writer, cancellationToken);
 
             if (result is
-                ReceiveResultType.ClosedUnexpectedly or
-                ReceiveResultType.CloseMessageReceived)
+                TextWebSocketReceiveResultType.ClosedUnexpectedly or
+                TextWebSocketReceiveResultType.CloseMessageReceived)
             {
                 // We're entering one of the close states and there is only (possibly) incomplete data
                 // that we already received, so we will discard this data and dispose of the stream.
@@ -146,7 +146,7 @@ public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
                 _sr?.Dispose();
                 _sr = null;
 
-                return new ReceiveResult(result, null);
+                return new TextWebSocketReceiveResult(result, null);
             }
 
             await writer.FlushAsync(cancellationToken)
@@ -172,7 +172,7 @@ public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
             _sr = null;
         }
 
-        return new ReceiveResult(ReceiveResultType.Regular, message);
+        return new TextWebSocketReceiveResult(TextWebSocketReceiveResultType.Regular, message);
     }
 
     public async Task SendAsync(string message, CancellationToken cancellationToken = default)
@@ -209,17 +209,16 @@ public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
         _sr?.Dispose();
         _sendSem.Dispose();
     }
+}
 
+public readonly record struct TextWebSocketReceiveResult(
+    TextWebSocketReceiveResultType Type,
+    string? Message
+);
 
-    public enum ReceiveResultType
-    {
-        Regular,
-        CloseMessageReceived,
-        ClosedUnexpectedly,
-    }
-
-    public readonly record struct ReceiveResult(
-        ReceiveResultType Type,
-        string? Message
-    );
+public enum TextWebSocketReceiveResultType
+{
+    Regular,
+    CloseMessageReceived,
+    ClosedUnexpectedly,
 }

@@ -43,7 +43,7 @@ public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
         _logger.LogInformation("Connected to {Uri}", uri);
     }
 
-    public async Task DisconnectAsync(CancellationToken cancellationToken = default)
+    public async Task CloseAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Closing WebSocket");
         try
@@ -142,7 +142,7 @@ public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
             {
                 // We're entering one of the close states and there is only (possibly) incomplete data
                 // that we already received, so we will discard this data and dispose of the stream.
-                // The stream might be null here in case we got here by calling DisconnectAsync.
+                // The stream might be null here in case we got here by calling CloseAsync.
                 _sr?.Dispose();
                 _sr = null;
 

@@ -134,7 +134,11 @@ public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
 
             PipeWriter writer = PipeWriter.Create(ms);
 
-            var result = await ReceiveMessage(writer, cancellationToken);
+            var result = await ReceiveMessage(writer, cancellationToken)
+                .ConfigureAwait(false);
+
+            await writer.FlushAsync(cancellationToken)
+                .ConfigureAwait(false);
 
             if (result is
                 TextWebSocketReceiveResultType.ClosedUnexpectedly or
@@ -148,9 +152,6 @@ public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
 
                 return new TextWebSocketReceiveResult(result, null);
             }
-
-            await writer.FlushAsync(cancellationToken)
-                .ConfigureAwait(false);
 
             // We're done writing to the stream with pipe writer,
             // seek to the beginning before reading with stream reader.

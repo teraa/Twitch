@@ -41,8 +41,16 @@ public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
         _logger.LogDebug("Connecting to {Uri}", uri);
         lock (_stateLock)
         {
-            _client.Dispose();
-            _client = _clientFactory();
+            if (_client.State != WebSocketState.None)
+            {
+                _client.Dispose();
+                _client = _clientFactory();
+                _logger.LogDebug("Created a new client");
+            }
+            else
+            {
+                _logger.LogDebug("Skipped creating a new client");
+            }
         }
 
         await _client.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
@@ -57,7 +65,7 @@ public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
             if (_client.State is WebSocketState.Closed or WebSocketState.Aborted)
             {
                 // We don't need to do any cleaning up
-                _logger.LogDebug("WebSocket already closed ({State})", _client.State);
+                _logger.LogDebug("WebSocket already closed ({State}), skipping sending close frame", _client.State);
                 return;
             }
 
@@ -96,7 +104,7 @@ public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
 
             try
             {
-                _logger.LogDebug("Receiving a new message");
+                _logger.LogDebug("Waiting to receive a new message");
 
                 result = await _client.ReceiveAsync(buffer, cancellationToken)
                     .ConfigureAwait(false);

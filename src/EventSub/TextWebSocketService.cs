@@ -125,6 +125,8 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
         // Store the task we're executing
         // TODO: make each task bulletproof
         _readerTask = Reader(_stoppingCts.Token);
+
+        _logger.LogInformation("Started");
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
@@ -157,6 +159,7 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
             await _readerTask.WaitAsync(cancellationToken).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
         }
 
+        _logger.LogInformation("Stopped");
     }
 
     public void Dispose()

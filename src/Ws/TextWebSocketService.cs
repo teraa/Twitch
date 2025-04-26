@@ -20,6 +20,7 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
     private Task? _readerTask;
     private CancellationTokenSource? _stoppingCts;
     private readonly SemaphoreSlim _reconnectSem = new(1, 1);
+    private readonly Channel<string> _sendChannel;
 
     public TextWebSocketService(
         ITextWebSocketClient client,
@@ -80,6 +81,8 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
     private async Task InvokeAsync<TEvent>(TEvent evt, CancellationToken cancellationToken)
         where TEvent : ITextWebSocketEvent
     {
+        await Task.Yield();
+
         IEnumerable<ITextWebSocketEventHandler<TEvent>> handlers;
 
         using var scope = _scopeFactory.CreateScope();
@@ -111,6 +114,7 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
 
     private async Task Reader(CancellationToken stoppingToken)
     {
+        await Task.Yield();
         try
         {
             await ReaderInternal(stoppingToken);

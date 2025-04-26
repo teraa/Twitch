@@ -19,6 +19,7 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
     private readonly IServiceScopeFactory _scopeFactory;
     private Task? _readerTask;
     private CancellationTokenSource? _stoppingCts;
+    private readonly SemaphoreSlim _sem = new(1, 1);
 
     public TextWebSocketService(
         ITextWebSocketClient client,
@@ -37,8 +38,28 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
         await _client.SendAsync(message, cancellationToken);
     }
 
-    // TODO: guard against exc
     private async Task Reconnect(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            await _sem.WaitAsync(stoppingToken);
+            try
+            {
+                await ReconnectInternal(stoppingToken);
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error reconnecting");
+            }
+            finally
+            {
+                _sem.Release();
+            }
+        }
+    }
+
+    private async Task ReconnectInternal(CancellationToken stoppingToken)
     {
         if (stoppingToken.IsCancellationRequested)
             return;
@@ -89,6 +110,20 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
     }
 
     private async Task Reader(CancellationToken stoppingToken)
+    {
+        try
+        {
+            await ReaderInternal(stoppingToken);
+        }
+        catch (Exception ex) when (ex is OperationCanceledException) { }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in reader task");
+            _ = Reconnect(stoppingToken);
+        }
+    }
+
+    private async Task ReaderInternal(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {

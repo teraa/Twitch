@@ -19,7 +19,7 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
     private readonly IServiceScopeFactory _scopeFactory;
     private Task? _readerTask;
     private CancellationTokenSource? _stoppingCts;
-    private readonly SemaphoreSlim _sem = new(1, 1);
+    private readonly SemaphoreSlim _reconnectSem = new(1, 1);
 
     public TextWebSocketService(
         ITextWebSocketClient client,
@@ -42,7 +42,7 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            await _sem.WaitAsync(stoppingToken);
+            await _reconnectSem.WaitAsync(stoppingToken);
             try
             {
                 await ReconnectInternal(stoppingToken);
@@ -54,7 +54,7 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
             }
             finally
             {
-                _sem.Release();
+                _reconnectSem.Release();
             }
         }
     }
@@ -220,7 +220,7 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
 
         _client.Dispose();
         _stoppingCts?.Dispose();
-        _sem.Dispose();
+        _reconnectSem.Dispose();
         _readerTask = null;
     }
 }

@@ -57,6 +57,7 @@ public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
         _logger.LogInformation("Connected to {Uri}", uri);
     }
 
+    // This method should never throw, except maybe when cancelled while waiting on semaphore.
     public async Task CloseAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Closing WebSocket");
@@ -79,6 +80,11 @@ public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
                     .ConfigureAwait(false);
 
                 _logger.LogDebug("Sent close frame");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error sending close frame");
+                _client.Abort();
             }
             finally
             {

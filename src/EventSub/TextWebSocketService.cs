@@ -117,6 +117,15 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
     {
         cancellationToken.ThrowIfCancellationRequested();
 
+        try
+        {
+            _stoppingCts?.Cancel();
+        }
+        catch
+        {
+            // ignored
+        }
+
         // Create linked token to allow cancelling executing task from provided token
         _stoppingCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
@@ -154,17 +163,26 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
             // Signal cancellation to the executing method
             _stoppingCts!.Cancel();
         }
-        finally
+        catch
         {
-            await _readerTask.WaitAsync(cancellationToken).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+            // ignored
         }
+
+        await _readerTask.WaitAsync(cancellationToken).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
 
         _logger.LogInformation("Stopped");
     }
 
     public void Dispose()
     {
-        _stoppingCts?.Cancel();
+        try
+        {
+            _stoppingCts?.Cancel();
+        }
+        catch
+        {
+            // ignored
+        }
         // TODO
     }
 }

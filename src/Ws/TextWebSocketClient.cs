@@ -5,7 +5,7 @@ using System.Text;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 
-namespace Teraa.Twitch.EventSub;
+namespace Teraa.Twitch.Ws;
 
 public interface ITextWebSocketClient : IDisposable
 {

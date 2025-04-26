@@ -3,7 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Teraa.Twitch.EventSub;
+namespace Teraa.Twitch.Ws;
 
 public sealed record TextWebSocketServiceOptions(
     Uri Uri

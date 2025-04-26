@@ -9,9 +9,9 @@ public sealed record TextWebSocketServiceOptions(
     Uri Uri
 );
 
-public interface ITextWebSocketService;
+public interface ITextWebSocketService : IDisposable;
 
-public sealed class TextWebSocketService : IHostedService, ITextWebSocketService, IDisposable
+public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
 {
     private readonly ITextWebSocketClient _client;
     private readonly TextWebSocketServiceOptions _options;
@@ -167,7 +167,6 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
         await _client.ConnectAsync(_options.Uri, cancellationToken);
 
         // Store the task we're executing
-        // TODO: make each task bulletproof
         _readerTask = Reader(_stoppingCts.Token);
 
         _logger.LogInformation("Started");
@@ -218,7 +217,11 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
         {
             // ignored
         }
-        // TODO
+
+        _client.Dispose();
+        _stoppingCts?.Dispose();
+        _sem.Dispose();
+        _readerTask = null;
     }
 }
 

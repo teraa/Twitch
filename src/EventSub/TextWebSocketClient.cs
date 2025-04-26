@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Teraa.Twitch.EventSub;
 
-public interface ITextWebSocketClient
+public interface ITextWebSocketClient : IDisposable
 {
     Task ConnectAsync(Uri uri, CancellationToken cancellationToken);
     Task CloseAsync(CancellationToken cancellationToken);
@@ -16,7 +16,7 @@ public interface ITextWebSocketClient
 }
 
 [PublicAPI]
-public sealed class TextWebSocketClient : ITextWebSocketClient, IDisposable
+public sealed class TextWebSocketClient : ITextWebSocketClient
 {
     private ClientWebSocket _client;
     private StreamReader? _sr;

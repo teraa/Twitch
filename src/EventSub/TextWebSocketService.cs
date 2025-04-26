@@ -246,8 +246,3 @@ public interface ITextWebSocketEventHandler<in TEvent> : ITextWebSocketEventHand
 {
     ValueTask HandleAsync(TEvent evt, CancellationToken cancellationToken);
 }
-
-public interface IConnectedHandler
-{
-    Task HandleAsync(ITextWebSocketService service);
-}

@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Teraa.Twitch.Ws.Events;
 
 namespace Teraa.Twitch.Ws;
 
@@ -355,27 +356,4 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
         Reader,
         Writer,
     }
-}
-
-public interface ITextWebSocketEvent
-{
-    ITextWebSocketService Service { get; }
-}
-
-public sealed record ConnectedEvent(
-    ITextWebSocketService Service,
-    int ConnectCount
-) : ITextWebSocketEvent;
-
-public sealed record MessageReceivedEvent(
-    ITextWebSocketService Service,
-    string Message
-) : ITextWebSocketEvent;
-
-public interface ITextWebSocketEventHandler;
-
-public interface ITextWebSocketEventHandler<in TEvent> : ITextWebSocketEventHandler
-    where TEvent : ITextWebSocketEvent
-{
-    ValueTask HandleAsync(TEvent evt, CancellationToken cancellationToken);
 }

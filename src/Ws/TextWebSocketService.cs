@@ -117,7 +117,7 @@ public sealed class TextWebSocketService : ITextWebSocketService
             // ignored
         }
 
-        _connectedTcs.TrySetCanceled();
+        _connectedTcs.TrySetCanceled(CancellationToken.None);
 
         await _connectorTask.WaitAsync(cancellationToken).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
 

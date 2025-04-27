@@ -34,6 +34,10 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
         _scopeFactory = scopeFactory;
     }
 
+    // Sends message directly, bypassing the queue.
+    // This should also be used to send messages which should not be retried after a reconnect automatically,
+    // e.g. authentication messages, because these are usually initiated from the reconnect event handler
+    // so we will re-send them manually there again.
     public async Task SendAsync(string message, CancellationToken cancellationToken = default)
     {
         await _client.SendAsync(message, cancellationToken);
@@ -67,6 +71,7 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
 
         // We can only get here from reader task itself,
         // it is guaranteed that it's not null here and there is no race conditions or concurrent access.
+        // This task should be completed at this point since we call reconnect on the exit of read task only.
         await _readerTask!.WaitAsync(stoppingToken).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
 
         await _client.CloseAsync(stoppingToken);
@@ -75,6 +80,7 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
         await _client.ConnectAsync(_options.Uri, stoppingToken);
         _readerTask = Reader(stoppingToken);
 
+        // Reconnect succeeded, invoke reconnected event handlers
         _ = InvokeAsync(new ReconnectEvent(this), stoppingToken);
     }
 
@@ -119,7 +125,10 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
         {
             await ReaderInternal(stoppingToken);
         }
-        catch (Exception ex) when (ex is OperationCanceledException) { }
+        catch (OperationCanceledException)
+        {
+            // ignored
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in reader task");

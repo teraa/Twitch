@@ -109,6 +109,10 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
             {
                 await handler.HandleAsync(evt, cancellationToken);
             }
+            catch (OperationCanceledException)
+            {
+                // ignored
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error invoking {HandlerType} handler for {EventType} event",

@@ -13,8 +13,8 @@ public sealed record TextWebSocketServiceOptions(
 
 public interface ITextWebSocketService : IHostedService, IDisposable
 {
-    Task SendAsync(string message, CancellationToken cancellationToken);
     void EnqueueMessage(string message);
+    Task SendAsync(string message, CancellationToken cancellationToken);
 }
 
 public sealed class TextWebSocketService : ITextWebSocketService
@@ -53,6 +53,12 @@ public sealed class TextWebSocketService : ITextWebSocketService
         _connectedTcs = new TaskCompletionSource();
     }
 
+    public void EnqueueMessage(string message)
+    {
+        // This will always succeed for an unbounded channel.
+        _sendChannel.Writer.TryWrite(message);
+    }
+
     // Sends message directly, bypassing the queue.
     // This should also be used to send messages which should not be retried after a reconnect automatically,
     // e.g. authentication messages, because these are usually initiated from the reconnect event handler
@@ -60,6 +66,80 @@ public sealed class TextWebSocketService : ITextWebSocketService
     public async Task SendAsync(string message, CancellationToken cancellationToken = default)
     {
         await _client.SendAsync(message, cancellationToken);
+    }
+
+    public async Task StartAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        try
+        {
+            _stoppingCts?.Cancel();
+        }
+        catch
+        {
+            // ignored
+        }
+
+        // Create linked token to allow cancelling executing task from provided token
+        _stoppingCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+
+        _connectorTask = Connector(_stoppingCts.Token);
+        await _connectedTcs.Task;
+
+        _logger.LogInformation("Started");
+    }
+
+    public async Task StopAsync(CancellationToken cancellationToken)
+    {
+        // Stop called without start
+        if (_connectorTask == null)
+        {
+            return;
+        }
+
+        try
+        {
+            await _client.CloseAsync(cancellationToken);
+        }
+        catch
+        {
+            // ignored
+        }
+
+        try
+        {
+            // Signal cancellation to the executing method
+            _stoppingCts!.Cancel();
+        }
+        catch
+        {
+            // ignored
+        }
+
+        _connectedTcs.TrySetCanceled();
+
+        await _connectorTask.WaitAsync(cancellationToken).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+
+        _logger.LogInformation("Stopped");
+    }
+
+    public void Dispose()
+    {
+        try
+        {
+            _stoppingCts?.Cancel();
+        }
+        catch
+        {
+            // ignored
+        }
+
+
+        _client.Dispose();
+        _stoppingCts?.Dispose();
+        _reconnectCts?.Dispose();
+        _connectorTask = null;
     }
 
     // Should only have one caller
@@ -163,45 +243,6 @@ public sealed class TextWebSocketService : ITextWebSocketService
         }
     }
 
-
-    private async Task InvokeAsync<TEvent>(TEvent evt, CancellationToken cancellationToken)
-        where TEvent : ITextWebSocketEvent
-    {
-        await Task.Yield();
-
-        IEnumerable<ITextWebSocketEventHandler<TEvent>> handlers;
-
-        using var scope = _scopeFactory.CreateScope();
-
-        try
-        {
-            handlers = scope.ServiceProvider.GetServices<ITextWebSocketEventHandler<TEvent>>();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving handlers from the service provider");
-            return;
-        }
-
-        foreach (var handler in handlers)
-        {
-            try
-            {
-                await handler.HandleAsync(evt, cancellationToken);
-            }
-            catch (OperationCanceledException)
-            {
-                // ignored
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error invoking {HandlerType} handler for {EventType} event",
-                    handler.GetType(),
-                    typeof(TEvent));
-            }
-        }
-    }
-
     private async Task Reader(CancellationToken stoppingToken)
     {
         await Task.Yield();
@@ -240,12 +281,6 @@ public sealed class TextWebSocketService : ITextWebSocketService
         }
     }
 
-    public void EnqueueMessage(string message)
-    {
-        // This will always succeed for an unbounded channel.
-        _sendChannel.Writer.TryWrite(message);
-    }
-
     private async Task Writer(CancellationToken stoppingToken)
     {
         await Task.Yield();
@@ -281,78 +316,42 @@ public sealed class TextWebSocketService : ITextWebSocketService
         }
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    private async Task InvokeAsync<TEvent>(TEvent evt, CancellationToken cancellationToken)
+        where TEvent : ITextWebSocketEvent
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        await Task.Yield();
+
+        IEnumerable<ITextWebSocketEventHandler<TEvent>> handlers;
+
+        using var scope = _scopeFactory.CreateScope();
 
         try
         {
-            _stoppingCts?.Cancel();
+            handlers = scope.ServiceProvider.GetServices<ITextWebSocketEventHandler<TEvent>>();
         }
-        catch
+        catch (Exception ex)
         {
-            // ignored
-        }
-
-        // Create linked token to allow cancelling executing task from provided token
-        _stoppingCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-
-        _connectorTask = Connector(_stoppingCts.Token);
-        await _connectedTcs.Task;
-
-        _logger.LogInformation("Started");
-    }
-
-    public async Task StopAsync(CancellationToken cancellationToken)
-    {
-        // Stop called without start
-        if (_connectorTask == null)
-        {
+            _logger.LogError(ex, "Error retrieving handlers from the service provider");
             return;
         }
 
-        try
+        foreach (var handler in handlers)
         {
-            await _client.CloseAsync(cancellationToken);
+            try
+            {
+                await handler.HandleAsync(evt, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                // ignored
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error invoking {HandlerType} handler for {EventType} event",
+                    handler.GetType(),
+                    typeof(TEvent));
+            }
         }
-        catch
-        {
-            // ignored
-        }
-
-        try
-        {
-            // Signal cancellation to the executing method
-            _stoppingCts!.Cancel();
-        }
-        catch
-        {
-            // ignored
-        }
-
-        _connectedTcs.TrySetCanceled();
-
-        await _connectorTask.WaitAsync(cancellationToken).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
-
-        _logger.LogInformation("Stopped");
-    }
-
-    public void Dispose()
-    {
-        try
-        {
-            _stoppingCts?.Cancel();
-        }
-        catch
-        {
-            // ignored
-        }
-
-
-        _client.Dispose();
-        _stoppingCts?.Dispose();
-        _reconnectCts?.Dispose();
-        _connectorTask = null;
     }
 
     private enum RequestSource

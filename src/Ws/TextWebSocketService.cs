@@ -202,7 +202,27 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
         await Task.Yield();
         try
         {
-            await ReaderInternal(stoppingToken);
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                var result = await _client.ReceiveAsync(stoppingToken);
+
+                if (result.Type is TextWebSocketReceiveResultType.ClosedUnexpectedly)
+                {
+                    _logger.LogInformation("WebSocket closed unexpectedly");
+                    await BeginReconnect(RequestSource.Reader, stoppingToken);
+                    break;
+                }
+
+                if (result.Type is TextWebSocketReceiveResultType.CloseMessageReceived)
+                {
+                    _logger.LogInformation("Received close message");
+                    await BeginReconnect(RequestSource.Reader, stoppingToken);
+                    break;
+                }
+
+                _logger.LogInformation("Received message");
+                _ = InvokeAsync(new MessageReceivedEvent(this, result.Message!), stoppingToken);
+            }
         }
         catch (OperationCanceledException)
         {
@@ -212,31 +232,6 @@ public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
         {
             _logger.LogError(ex, "Error in reader task");
             await BeginReconnect(RequestSource.Reader, stoppingToken);
-        }
-    }
-
-    private async Task ReaderInternal(CancellationToken stoppingToken)
-    {
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            var result = await _client.ReceiveAsync(stoppingToken);
-
-            if (result.Type is TextWebSocketReceiveResultType.ClosedUnexpectedly)
-            {
-                _logger.LogInformation("WebSocket closed unexpectedly");
-                await BeginReconnect(RequestSource.Reader, stoppingToken);
-                break;
-            }
-
-            if (result.Type is TextWebSocketReceiveResultType.CloseMessageReceived)
-            {
-                _logger.LogInformation("Received close message");
-                await BeginReconnect(RequestSource.Reader, stoppingToken);
-                break;
-            }
-
-            _logger.LogInformation("Received message");
-            _ = InvokeAsync(new MessageReceivedEvent(this, result.Message!), stoppingToken);
         }
     }
 

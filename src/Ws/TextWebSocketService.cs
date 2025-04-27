@@ -11,9 +11,13 @@ public sealed record TextWebSocketServiceOptions(
     Uri Uri
 );
 
-public interface ITextWebSocketService : IDisposable;
+public interface ITextWebSocketService : IHostedService, IDisposable
+{
+    Task SendAsync(string message, CancellationToken cancellationToken);
+    void EnqueueMessage(string message);
+}
 
-public sealed class TextWebSocketService : IHostedService, ITextWebSocketService
+public sealed class TextWebSocketService : ITextWebSocketService
 {
     private readonly ITextWebSocketClient _client;
     private readonly TextWebSocketServiceOptions _options;

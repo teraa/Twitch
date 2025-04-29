@@ -53,7 +53,7 @@ public sealed class TextWebSocketService : ITextWebSocketService
 
         // This needs to be a field so that StartAsync can wait until the connection establishes.
         // Otherwise, it could have been a local variable passed around to other methods.
-        _connectedTcs = new TaskCompletionSource();
+        _connectedTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
     }
 
     public AsyncRetryPolicy ConnectRetryPolicy { get; set; } = Policy

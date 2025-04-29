@@ -3,6 +3,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Polly;
+using Polly.Contrib.WaitAndRetry;
+using Polly.Retry;
 using Teraa.Twitch.Ws.Events;
 
 namespace Teraa.Twitch.Ws;
@@ -52,6 +55,15 @@ public sealed class TextWebSocketService : ITextWebSocketService
         // Otherwise, it could have been a local variable passed around to other methods.
         _connectedTcs = new TaskCompletionSource();
     }
+
+    public AsyncRetryPolicy ConnectRetryPolicy { get; set; } = Policy
+        .Handle<Exception>(ex => ex is not OperationCanceledException)
+        .WaitAndRetryAsync(Backoff.DecorrelatedJitterBackoffV2(
+                medianFirstRetryDelay: TimeSpan.FromSeconds(1),
+                retryCount: 20,
+                fastFirst: true
+            )
+        );
 
     public void EnqueueMessage(string message)
     {
@@ -155,7 +167,7 @@ public sealed class TextWebSocketService : ITextWebSocketService
             try
             {
                 // Connect
-                await _client.ConnectAsync(_options.Uri, stoppingToken);
+                await ConnectRetryPolicy.ExecuteAsync(() => _client.ConnectAsync(_options.Uri, stoppingToken));
 
                 // Create and save the reconnect CTS before starting the Reader task which could cancel it.
                 // Theoretically, the Writer task could have tried to use it already since we started it already,

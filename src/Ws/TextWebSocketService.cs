@@ -28,8 +28,8 @@ public sealed class TextWebSocketService : ITextWebSocketService
     private readonly IServiceScopeFactory _scopeFactory;
     private CancellationTokenSource? _stoppingCts;
     private CancellationTokenSource? _reconnectCts;
-    private TaskCompletionSource _connectedTcs;
     private readonly Channel<string> _sendChannel;
+    private string? _unsentMessage;
     private Task? _connectorTask;
     private int _connectCount;
 
@@ -50,10 +50,6 @@ public sealed class TextWebSocketService : ITextWebSocketService
                 SingleWriter = true,
             }
         );
-
-        // This needs to be a field so that StartAsync can wait until the connection establishes.
-        // Otherwise, it could have been a local variable passed around to other methods.
-        _connectedTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
     }
 
     public AsyncRetryPolicy ConnectRetryPolicy { get; set; } = Policy
@@ -97,7 +93,6 @@ public sealed class TextWebSocketService : ITextWebSocketService
         _stoppingCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
         _connectorTask = Connector(_stoppingCts.Token);
-        await _connectedTcs.Task;
 
         _logger.LogInformation("Started");
     }
@@ -129,8 +124,6 @@ public sealed class TextWebSocketService : ITextWebSocketService
             // ignored
         }
 
-        _connectedTcs.TrySetCanceled(CancellationToken.None);
-
         await _connectorTask.WaitAsync(cancellationToken).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
 
         _logger.LogInformation("Stopped");
@@ -159,9 +152,6 @@ public sealed class TextWebSocketService : ITextWebSocketService
     {
         await Task.Yield();
 
-        // We can start writer right away because it will wait for connected TCS to complete before writing.
-        var writerTask = Writer(stoppingToken);
-
         while (!stoppingToken.IsCancellationRequested)
         {
             try
@@ -169,23 +159,19 @@ public sealed class TextWebSocketService : ITextWebSocketService
                 // Connect
                 await ConnectRetryPolicy.ExecuteAsync(() => _client.ConnectAsync(_options.Uri, stoppingToken));
 
-                // Create and save the reconnect CTS before starting the Reader task which could cancel it.
-                // Theoretically, the Writer task could have tried to use it already since we started it already,
-                // but it can't since it will have blocked on waiting for connected TCS to complete.
+                // Create and save the reconnect CTS before starting the Reader and Writer tasks which could cancel it.
+                _reconnectCts?.Dispose();
                 _reconnectCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
 
                 // Store the tasks we're executing
                 // We assume these tasks yield immediately and never throw
                 var readerTask = Reader(_reconnectCts.Token);
+                var writerTask = Writer(_reconnectCts.Token);
 
                 // Connect succeeded, invoke and await connected event handlers
                 // We await here because we want to signal to the writer only after the connected handlers run.
                 // That way the client can send messages before the writer resumes consuming the send queue.
                 await InvokeAsync(new ConnectedEvent(this, _connectCount++), stoppingToken);
-
-                // Signal to the writer that it can resume consuming the send queue.
-                // Also signal to the StartAsync that it can return, in case this is the first connection attempt.
-                _connectedTcs.TrySetResult();
 
 
                 // Wait for something to call BeginReconnect
@@ -197,20 +183,12 @@ public sealed class TextWebSocketService : ITextWebSocketService
                 {
                     // ignore
                 }
-                if (stoppingToken.IsCancellationRequested)
-                    break;
 
-
-                // Reconnect:
-                // If we got here, it means something requested the reconnect,
-                // so we will begin closing procedure before reconnecting
-
-                // Writer will observe a new TCS which will stop it from sending data until we reconnect.
-                _connectedTcs = new TaskCompletionSource();
-
-                // This task is completed already since the cancel token that was passed to it was cancelled
+                // Reconnect or stop was requested.
+                // These tasks are completed already since the cancel token that was passed to them was cancelled
                 // if we got to this point
-                await readerTask.WaitAsync(stoppingToken).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+                await readerTask.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+                await writerTask.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
             }
             catch (OperationCanceledException)
             {
@@ -221,9 +199,6 @@ public sealed class TextWebSocketService : ITextWebSocketService
                 _logger.LogError(ex, "Error in connector task");
             }
         }
-
-        // If we get here, it means stoppingToken was cancelled so the writer task here is done already.
-        await writerTask.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
     }
 
     private async Task BeginReconnect(RequestSource source, CancellationToken cancellationToken)
@@ -294,38 +269,39 @@ public sealed class TextWebSocketService : ITextWebSocketService
         }
     }
 
-    private async Task Writer(CancellationToken stoppingToken)
+    private async Task Writer(CancellationToken cancellationToken)
     {
         await Task.Yield();
 
-        await foreach (var message in _sendChannel.Reader.ReadAllAsync(stoppingToken))
+        try
         {
-            _logger.LogTrace("Sending: {Message}", message);
-
-            // Repeatedly try to send the same message until we succeed
-            while (!stoppingToken.IsCancellationRequested)
+            // Retry sending the unsent message from last session
+            if (_unsentMessage is not null)
             {
+                await _client.SendAsync(_unsentMessage, cancellationToken);
+                _unsentMessage = null;
+            }
+
+            await foreach (var message in _sendChannel.Reader.ReadAllAsync(cancellationToken))
+            {
+                _logger.LogTrace("Sending: {Message}", message);
+
                 // If send fails, we need to retry sending this message after reconnect,
                 // unless its cancel exception.
-                try
-                {
-                    // Wait until the client is connected
-                    await _connectedTcs.Task;
-                    await _client.SendAsync(message, stoppingToken);
-                    break;
-                }
-                catch (OperationCanceledException)
-                {
-                    // Either the connect TCS or the stopping token was cancelled, in any case we should break out.
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    // Reconnect and retry
-                    _logger.LogError(ex, "Error sending message");
-                    await BeginReconnect(RequestSource.Writer, stoppingToken);
-                }
+                _unsentMessage = message;
+                await _client.SendAsync(message, cancellationToken);
+                _unsentMessage = null;
             }
+        }
+        catch (OperationCanceledException)
+        {
+            // Either the connect TCS or the stopping token was cancelled, in any case we should break out.
+        }
+        catch (Exception ex)
+        {
+            // Reconnect
+            _logger.LogError(ex, "Error sending message");
+            await BeginReconnect(RequestSource.Writer, cancellationToken);
         }
     }
 

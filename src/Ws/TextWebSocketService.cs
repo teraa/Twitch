@@ -262,7 +262,7 @@ public sealed class TextWebSocketService : ITextWebSocketService
                     break;
                 }
 
-                _logger.LogInformation("Received message");
+                _logger.LogInformation("Received: {Message}", result.Message);
                 _ = InvokeAsync(new MessageReceivedEvent(this, result.Message!), cancellationToken);
             }
         }

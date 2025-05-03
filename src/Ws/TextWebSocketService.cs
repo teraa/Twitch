@@ -18,6 +18,7 @@ public interface ITextWebSocketService : IHostedService, IDisposable
 {
     void EnqueueMessage(string message);
     Task SendAsync(string message, CancellationToken cancellationToken);
+    Task BeginReconnectAsync(CancellationToken cancellationToken);
 }
 
 public sealed class TextWebSocketService : ITextWebSocketService
@@ -201,6 +202,11 @@ public sealed class TextWebSocketService : ITextWebSocketService
         }
     }
 
+    public async Task BeginReconnectAsync(CancellationToken cancellationToken)
+    {
+        await BeginReconnect(RequestSource.External, cancellationToken);
+    }
+
     private async Task BeginReconnect(RequestSource source, CancellationToken cancellationToken)
     {
         // log who requested reconnect
@@ -347,5 +353,6 @@ public sealed class TextWebSocketService : ITextWebSocketService
     {
         Reader,
         Writer,
+        External
     }
 }

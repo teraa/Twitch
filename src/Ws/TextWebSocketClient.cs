@@ -4,6 +4,7 @@ using System.Net.WebSockets;
 using System.Text;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Teraa.Twitch.Ws;
 
@@ -14,6 +15,12 @@ public interface ITextWebSocketClient : IDisposable
     Task<TextWebSocketReceiveResult> ReceiveAsync(CancellationToken cancellationToken);
     Task SendAsync(string message, CancellationToken cancellationToken);
 }
+
+public sealed class TextWebSocketClientOptions
+{
+    public Func<ClientWebSocket> ClientFactory { get; set; } = () => new ClientWebSocket();
+}
+
 
 [PublicAPI]
 public sealed class TextWebSocketClient : ITextWebSocketClient
@@ -26,9 +33,10 @@ public sealed class TextWebSocketClient : ITextWebSocketClient
     private readonly ILogger<TextWebSocketClient> _logger;
 
     public TextWebSocketClient(
-        Func<ClientWebSocket> clientFactory,
+        IOptions<TextWebSocketClientOptions> options,
         ILogger<TextWebSocketClient> logger)
     {
+        var clientFactory = options.Value.ClientFactory;
         _client = clientFactory();
         _clientFactory = clientFactory;
         _logger = logger;

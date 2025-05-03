@@ -1,9 +1,6 @@
 ﻿using System.Net.Http.Headers;
-using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Refit;
 using Serilog;
 using Teraa.Twitch.Helix;
 

@@ -78,7 +78,7 @@ public sealed class TextWebSocketService : ITextWebSocketService
         await _client.SendAsync(message, cancellationToken);
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public Task StartAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -97,6 +97,7 @@ public sealed class TextWebSocketService : ITextWebSocketService
         _connectorTask = Connector(_stoppingCts.Token);
 
         _logger.LogInformation("Started");
+        return Task.CompletedTask;
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)

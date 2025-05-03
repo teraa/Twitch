@@ -61,40 +61,32 @@ public sealed class TextWebSocketClient : ITextWebSocketClient
     public async Task CloseAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Closing WebSocket");
+        if (_client.State is WebSocketState.Closed or WebSocketState.Aborted)
+        {
+            // We don't need to do any cleaning up
+            _logger.LogDebug("WebSocket already closed ({State}), skipping sending close frame", _client.State);
+            return;
+        }
+
+        await _sendSem.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            if (_client.State is WebSocketState.Closed or WebSocketState.Aborted)
-            {
-                // We don't need to do any cleaning up
-                _logger.LogDebug("WebSocket already closed ({State}), skipping sending close frame", _client.State);
-                return;
-            }
+            // This will send a message to close the socket. If we're sending something else concurrently,
+            // one of the two calls will throw because that is not a supported operation.
+            // So we use a semaphore to synchronize these calls.
+            await _client.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, null, cancellationToken)
+                .ConfigureAwait(false);
 
-            await _sendSem.WaitAsync(cancellationToken).ConfigureAwait(false);
-            try
-            {
-                // This will send a message to close the socket. If we're sending something else concurrently,
-                // one of the two calls will throw because that is not a supported operation.
-                // So we use a semaphore to synchronize these calls.
-                await _client.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, null, cancellationToken)
-                    .ConfigureAwait(false);
-
-                _logger.LogDebug("Sent close frame");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error sending close frame");
-                _client.Abort();
-            }
-            finally
-            {
-                _sendSem.Release();
-            }
+            _logger.LogDebug("Sent close frame");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error sending close frame");
+            _client.Abort();
         }
         finally
         {
-            _sr?.Dispose();
-            _sr = null;
+            _sendSem.Release();
         }
     }
 
@@ -154,11 +146,22 @@ public sealed class TextWebSocketClient : ITextWebSocketClient
 
             PipeWriter writer = PipeWriter.Create(ms);
 
-            var result = await ReceiveMessage(writer, cancellationToken)
-                .ConfigureAwait(false);
+            TextWebSocketReceiveResultType result;
+            try
+            {
+                result = await ReceiveMessage(writer, cancellationToken)
+                    .ConfigureAwait(false);
 
-            await writer.FlushAsync(cancellationToken)
-                .ConfigureAwait(false);
+                await writer.FlushAsync(cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch
+            {
+                // Clear SR here to prevent the next ReceiveAsync call from "reading" a null value
+                _sr.Dispose();
+                _sr = null;
+                throw;
+            }
 
             if (result is
                 TextWebSocketReceiveResultType.ClosedUnexpectedly or
@@ -166,8 +169,7 @@ public sealed class TextWebSocketClient : ITextWebSocketClient
             {
                 // We're entering one of the close states and there is only (possibly) incomplete data
                 // that we already received, so we will discard this data and dispose of the stream.
-                // The stream might be null here in case we got here by calling CloseAsync.
-                _sr?.Dispose();
+                _sr.Dispose();
                 _sr = null;
 
                 return new TextWebSocketReceiveResult(result, null);

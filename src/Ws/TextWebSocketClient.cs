@@ -38,7 +38,6 @@ public sealed class TextWebSocketClient : ITextWebSocketClient
 
     public async Task ConnectAsync(Uri uri, CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Connecting to {Uri}", uri);
         lock (_stateLock)
         {
             if (_client.State != WebSocketState.None)
@@ -53,6 +52,7 @@ public sealed class TextWebSocketClient : ITextWebSocketClient
             }
         }
 
+        _logger.LogDebug("Connecting to {Uri}", uri);
         await _client.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
         _logger.LogInformation("Connected to {Uri}", uri);
     }

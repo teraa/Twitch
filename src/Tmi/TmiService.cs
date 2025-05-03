@@ -25,11 +25,6 @@ public class TmiServiceOptions
     public TimeSpan MaxPongDelay { get; set; } = TimeSpan.FromSeconds(10);
 }
 
-public interface ITmiClient
-{
-    void EnqueueMessage(IMessage message);
-}
-
 public interface ITmiService : IHostedService
 {
     void EnqueueMessage(IMessage message);

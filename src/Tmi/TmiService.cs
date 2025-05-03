@@ -28,6 +28,7 @@ public class TmiServiceOptions
 public interface ITmiService : IHostedService
 {
     void EnqueueMessage(IMessage message);
+    internal Task InvokeAsync(ITmiEvent evt, CancellationToken cancellationToken);
     internal Task InvokeAsync<TEvent>(TEvent evt, CancellationToken cancellationToken) where TEvent : ITmiEvent;
     internal DateTimeOffset LastPongAt { get; set; }
     internal IMessageParser MessageParser { get; }
@@ -90,6 +91,17 @@ public sealed class TmiService : BackgroundService, ITmiService
     {
         await base.StopAsync(cancellationToken);
         await _ws.StopAsync(cancellationToken);
+    }
+
+    async Task ITmiService.InvokeAsync(ITmiEvent evt, CancellationToken cancellationToken)
+    {
+        await (evt switch
+        {
+            MessageReceivedEvent e => ((ITmiService) this).InvokeAsync(e, cancellationToken),
+            ConnectedEvent e => ((ITmiService) this).InvokeAsync(e, cancellationToken),
+            UnknownMessageReceivedEvent e => ((ITmiService) this).InvokeAsync(e, cancellationToken),
+            _ => throw new NotImplementedException(),
+        });
     }
 
     async Task ITmiService.InvokeAsync<TEvent>(TEvent evt, CancellationToken cancellationToken)

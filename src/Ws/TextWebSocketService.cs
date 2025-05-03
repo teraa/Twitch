@@ -226,7 +226,7 @@ public sealed class TextWebSocketService : ITextWebSocketService
         await writerTask.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
     }
 
-    private async Task BeginReconnect(RequestSource source, CancellationToken stoppingToken)
+    private async Task BeginReconnect(RequestSource source, CancellationToken cancellationToken)
     {
         // log who requested reconnect
         _logger.LogDebug("Reconnect request from {Source}", source);
@@ -237,7 +237,7 @@ public sealed class TextWebSocketService : ITextWebSocketService
         // CloseAsync method doesn't throw unless cancelled.
         try
         {
-            await _client.CloseAsync(stoppingToken);
+            await _client.CloseAsync(cancellationToken);
         }
         catch
         {
@@ -255,41 +255,42 @@ public sealed class TextWebSocketService : ITextWebSocketService
         }
     }
 
-    private async Task Reader(CancellationToken stoppingToken)
+    private async Task Reader(CancellationToken cancellationToken)
     {
         await Task.Yield();
         try
         {
-            while (!stoppingToken.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested)
             {
-                var result = await _client.ReceiveAsync(stoppingToken);
+                var result = await _client.ReceiveAsync(cancellationToken);
 
                 if (result.Type is TextWebSocketReceiveResultType.ClosedUnexpectedly)
                 {
                     _logger.LogInformation("WebSocket closed unexpectedly");
-                    await BeginReconnect(RequestSource.Reader, stoppingToken);
+                    await BeginReconnect(RequestSource.Reader, cancellationToken);
                     break;
                 }
 
                 if (result.Type is TextWebSocketReceiveResultType.CloseMessageReceived)
                 {
                     _logger.LogInformation("Received close message");
-                    await BeginReconnect(RequestSource.Reader, stoppingToken);
+                    await BeginReconnect(RequestSource.Reader, cancellationToken);
                     break;
                 }
 
                 _logger.LogInformation("Received message");
-                _ = InvokeAsync(new MessageReceivedEvent(this, result.Message!), stoppingToken);
+                _ = InvokeAsync(new MessageReceivedEvent(this, result.Message!), cancellationToken);
             }
         }
         catch (OperationCanceledException)
         {
-            // ignored
+            // Either the connect TCS or the stopping token was cancelled, in any case we should break out.
         }
         catch (Exception ex)
         {
+            // Reconnect
             _logger.LogError(ex, "Error in reader task");
-            await BeginReconnect(RequestSource.Reader, stoppingToken);
+            await BeginReconnect(RequestSource.Reader, cancellationToken);
         }
     }
 

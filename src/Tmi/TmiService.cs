@@ -10,7 +10,7 @@ using Teraa.Twitch.Ws;
 namespace Teraa.Twitch.Tmi;
 
 [PublicAPI]
-public class TmiServiceOptions : IWsServiceOptions
+public class TmiServiceOptions
 {
     public Uri Uri { get; set; } = new("wss://irc-ws.chat.twitch.tv:443");
 

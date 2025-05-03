@@ -2,12 +2,8 @@
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
-using Teraa.Irc;
-using Teraa.Irc.Parsing;
 using Teraa.Twitch.PubSub;
 using Teraa.Twitch.PubSub.Payloads;
-using Teraa.Twitch.Tmi;
-using Teraa.Twitch.Ws;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Verbose()
@@ -21,12 +17,6 @@ var services = new ServiceCollection()
         configure.AddSerilog();
     })
     .AddMediatR(config => config.RegisterServicesFromAssemblyContaining<Program>())
-    .AddTmiService(options =>
-    {
-        // options.Uri = new Uri("ws://localhost:5033/ws");
-        options.PingInterval = TimeSpan.FromSeconds(10);
-        options.MaxPongDelay = TimeSpan.FromSeconds(1);
-    })
     .AddPubSubService(options =>
     {
         // options.Uri = new Uri("ws://localhost:5033/ws");
@@ -37,14 +27,10 @@ var services = new ServiceCollection()
         ValidateOnBuild = true,
     });
 
-WsService svc;
-
-// svc = services.GetRequiredService<PubSubService>();
-svc = services.GetRequiredService<TmiService>();
+var svc = services.GetRequiredService<PubSubService>();
 
 await svc.StartAsync(default);
 
-var messageParser = new MessageParser();
 string? line;
 while ((line = Console.ReadLine()) is not null)
 {
@@ -59,19 +45,7 @@ while ((line = Console.ReadLine()) is not null)
             await svc.StopAsync(default);
             break;
         default:
-            if (svc is TmiService tmi)
-            {
-                if (!messageParser.TryParse(line, out var message))
-                {
-                    Console.WriteLine("Invalid message format.");
-                    continue;
-                }
-                tmi.EnqueueMessage(message);
-            }
-            else
-            {
-                svc.EnqueueMessage(line);
-            }
+            svc.EnqueueMessage(line);
             break;
     }
 }
@@ -79,35 +53,6 @@ while ((line = Console.ReadLine()) is not null)
 if (svc.IsStarted)
     await svc.StopAsync(default);
 
-[UsedImplicitly]
-public class MessageHandler : INotificationHandler<Teraa.Twitch.Tmi.Notifications.MessageReceived>
-{
-    public Task Handle(Teraa.Twitch.Tmi.Notifications.MessageReceived received, CancellationToken cancellationToken)
-    {
-        if (received.Message is {Command: Command.PONG, Content.Text: "throw"})
-            throw new ArgumentException("pong");
-
-        return Task.CompletedTask;
-    }
-}
-
-[UsedImplicitly]
-public class ConnectedHandler : INotificationHandler<Teraa.Twitch.Tmi.Notifications.Connected>
-{
-    private readonly TmiService _tmi;
-
-    public ConnectedHandler(TmiService tmi)
-    {
-        _tmi = tmi;
-    }
-
-    public Task Handle(Teraa.Twitch.Tmi.Notifications.Connected notification, CancellationToken cancellationToken)
-    {
-        _tmi.EnqueueMessage(new Message(Command.NICK, Content: new Content("justinfan1")));
-
-        return Task.CompletedTask;
-    }
-}
 
 [UsedImplicitly]
 public class PubSubConnectedHandler : INotificationHandler<Teraa.Twitch.PubSub.Notifications.Connected>

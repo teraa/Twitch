@@ -10,7 +10,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\src\PubSub\PubSub.csproj" />
-      <ProjectReference Include="..\..\src\Tmi\Tmi.csproj" />
     </ItemGroup>
 
     <ItemGroup>

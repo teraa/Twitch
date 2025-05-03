@@ -10,9 +10,19 @@ using Teraa.Twitch.Ws.Events;
 
 namespace Teraa.Twitch.Ws;
 
-public sealed record TextWebSocketServiceOptions(
-    Uri Uri
-);
+public sealed class TextWebSocketServiceOptions
+{
+    public required Uri Uri { get; set; }
+
+    public AsyncRetryPolicy ConnectRetryPolicy { get; set; } = Policy
+        .Handle<Exception>(ex => ex is not OperationCanceledException)
+        .WaitAndRetryAsync(Backoff.DecorrelatedJitterBackoffV2(
+                medianFirstRetryDelay: TimeSpan.FromSeconds(1),
+                retryCount: 20,
+                fastFirst: true
+            )
+        );
+}
 
 public interface ITextWebSocketService : IHostedService, IDisposable
 {
@@ -53,14 +63,6 @@ public sealed class TextWebSocketService : ITextWebSocketService
         );
     }
 
-    public AsyncRetryPolicy ConnectRetryPolicy { get; set; } = Policy
-        .Handle<Exception>(ex => ex is not OperationCanceledException)
-        .WaitAndRetryAsync(Backoff.DecorrelatedJitterBackoffV2(
-                medianFirstRetryDelay: TimeSpan.FromSeconds(1),
-                retryCount: 20,
-                fastFirst: true
-            )
-        );
 
     public void EnqueueMessage(string message)
     {
@@ -158,7 +160,9 @@ public sealed class TextWebSocketService : ITextWebSocketService
             try
             {
                 // Connect
-                await ConnectRetryPolicy.ExecuteAsync(() => _client.ConnectAsync(_options.Uri, stoppingToken));
+                await _options.ConnectRetryPolicy.ExecuteAsync(
+                    () => _client.ConnectAsync(_options.Uri, stoppingToken)
+                );
 
                 // Create and save the reconnect CTS before starting the Reader and Writer tasks which could cancel it.
                 _reconnectCts?.Dispose();

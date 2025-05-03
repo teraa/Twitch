@@ -22,8 +22,8 @@ public static class ServiceCollectionExtensions
             .AddTextWebSocketService(options => options.Uri = new Uri("wss://irc-ws.chat.twitch.tv:443"))
             .AddSingleton<ITmiService, TmiService>()
             .AddHostedService(sp => sp.GetRequiredService<ITmiService>())
-            .AddTextWebSocketEventHandler<Ws.Events.ConnectedEvent, ConnectedEventHandler>()
-            .AddTextWebSocketEventHandler<Ws.Events.MessageReceivedEvent, MessageReceivedEventHandler>();
+            .AddTextWebSocketEventHandler<Ws.ConnectedEvent, ConnectedEventHandler>()
+            .AddTextWebSocketEventHandler<Ws.MessageReceivedEvent, MessageReceivedEventHandler>();
 
 
         return services;

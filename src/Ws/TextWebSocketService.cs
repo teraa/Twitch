@@ -6,7 +6,6 @@ using Microsoft.Extensions.Options;
 using Polly;
 using Polly.Contrib.WaitAndRetry;
 using Polly.Retry;
-using Teraa.Twitch.Ws.Events;
 
 namespace Teraa.Twitch.Ws;
 

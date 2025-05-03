@@ -1,11 +1,11 @@
 using Microsoft.Extensions.Logging;
 using Teraa.Irc;
-using Teraa.Twitch.Ws.Events;
+using Teraa.Twitch.Ws;
 
 namespace Teraa.Twitch.Tmi;
 
 
-internal class ConnectedEventHandler : ITextWebSocketEventHandler<Ws.Events.ConnectedEvent>
+internal class ConnectedEventHandler : ITextWebSocketEventHandler<Ws.ConnectedEvent>
 {
     private readonly ITmiService _tmi;
 
@@ -14,14 +14,14 @@ internal class ConnectedEventHandler : ITextWebSocketEventHandler<Ws.Events.Conn
         _tmi = tmi;
     }
 
-    public async ValueTask HandleAsync(Ws.Events.ConnectedEvent evt, CancellationToken cancellationToken)
+    public async ValueTask HandleAsync(Ws.ConnectedEvent evt, CancellationToken cancellationToken)
     {
         await _tmi.InvokeAsync(new ConnectedEvent(_tmi), cancellationToken);
     }
 }
 
 
-internal class MessageReceivedEventHandler : ITextWebSocketEventHandler<Ws.Events.MessageReceivedEvent>
+internal class MessageReceivedEventHandler : ITextWebSocketEventHandler<Ws.MessageReceivedEvent>
 {
     private readonly ITmiService _tmi;
     private readonly ILogger<MessageReceivedEventHandler> _logger;
@@ -34,7 +34,7 @@ internal class MessageReceivedEventHandler : ITextWebSocketEventHandler<Ws.Event
         _logger = logger;
     }
 
-    public async ValueTask HandleAsync(Ws.Events.MessageReceivedEvent evt, CancellationToken cancellationToken)
+    public async ValueTask HandleAsync(Ws.MessageReceivedEvent evt, CancellationToken cancellationToken)
     {
         ITmiEvent newEvt;
         var rawMessage = evt.Message;

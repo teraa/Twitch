@@ -1,6 +1,5 @@
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
-using Teraa.Twitch.Ws.Events;
 
 namespace Teraa.Twitch.Ws;
 

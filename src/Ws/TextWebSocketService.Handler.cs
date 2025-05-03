@@ -1,4 +1,4 @@
-namespace Teraa.Twitch.Ws.Events;
+namespace Teraa.Twitch.Ws;
 
 public interface ITextWebSocketEventHandler;
 

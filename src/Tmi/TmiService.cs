@@ -1,11 +1,10 @@
 ﻿using JetBrains.Annotations;
-using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Teraa.Irc;
 using Teraa.Irc.Parsing;
-using Teraa.Twitch.Tmi.Notifications;
 using Teraa.Twitch.Ws;
 
 namespace Teraa.Twitch.Tmi;
@@ -14,8 +13,6 @@ namespace Teraa.Twitch.Tmi;
 public class TmiServiceOptions : IWsServiceOptions
 {
     public Uri Uri { get; set; } = new("wss://irc-ws.chat.twitch.tv:443");
-
-    public Func<IServiceProvider, IPublisher> PublisherFactory { get; set; } = x => x.GetRequiredService<IPublisher>();
 
     public IMessageParser MessageParser { get; set; } = new MessageParser
     {
@@ -33,101 +30,107 @@ public interface ITmiClient
     void EnqueueMessage(IMessage message);
 }
 
+public interface ITmiService : IHostedService
+{
+    void EnqueueMessage(IMessage message);
+    internal Task InvokeAsync<TEvent>(TEvent evt, CancellationToken cancellationToken) where TEvent : ITmiEvent;
+    internal DateTimeOffset LastPongAt { get; set; }
+    internal IMessageParser MessageParser { get; }
+};
+
 [PublicAPI]
-public sealed class TmiService : WsService, ITmiClient
+public sealed class TmiService : BackgroundService, ITmiService
 {
     private readonly TmiServiceOptions _options;
+    private readonly ITextWebSocketService _ws;
     private readonly ILogger<TmiService> _logger;
-    private readonly IServiceProvider _services;
-    private DateTimeOffset _lastPongAt;
+    private readonly IServiceScopeFactory _scopeFactory;
+    private DateTimeOffset _lastPong;
 
     public TmiService(
-        IWsClient client,
         IOptions<TmiServiceOptions> options,
+        ITextWebSocketService ws,
         ILogger<TmiService> logger,
-        IServiceProvider services)
-        : base(client, options, logger)
+        IServiceScopeFactory scopeFactory)
     {
+        _ws = ws;
         _options = options.Value;
         _logger = logger;
-        _services = services;
+        _scopeFactory = scopeFactory;
     }
 
+    DateTimeOffset ITmiService.LastPongAt { get => _lastPong; set => _lastPong = value; }
+
+    IMessageParser ITmiService.MessageParser => _options.MessageParser;
+
     public void EnqueueMessage(IMessage message)
-        => EnqueueMessage(_options.MessageParser.ToString(message));
+        => _ws.EnqueueMessage(_options.MessageParser.ToString(message));
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            if (!IsReconnecting)
+            var enqueuedAt = DateTimeOffset.UtcNow;
+            EnqueueMessage(new Message(Command.PING));
+
+            await Task.Delay(_options.MaxPongDelay, stoppingToken);
+
+            if (_lastPong < enqueuedAt)
             {
-                var enqueuedAt = DateTimeOffset.UtcNow;
-                EnqueueMessage(new Message(Command.PING));
-
-                await Task.Delay(_options.MaxPongDelay, stoppingToken);
-
-                if (_lastPongAt < enqueuedAt)
-                {
-                    _logger.LogWarning("No PONG received within {Time}, reconnecting", _options.MaxPongDelay);
-                    _ = ReconnectAsync(stoppingToken);
-                }
+                _logger.LogWarning("No PONG received within {Time}, reconnecting", _options.MaxPongDelay);
+                await _ws.BeginReconnectAsync(stoppingToken);
             }
 
             await Task.Delay(_options.PingInterval - _options.MaxPongDelay, stoppingToken);
         }
     }
 
-    protected override async ValueTask HandleConnectAsync(CancellationToken cancellationToken)
+    public override async Task StartAsync(CancellationToken cancellationToken)
     {
-        await PublishAsync(new Connected(), cancellationToken);
+        await _ws.StartAsync(cancellationToken);
+        await base.StartAsync(cancellationToken);
     }
 
-    protected override async ValueTask HandleReceivedAsync(string rawMessage, CancellationToken cancellationToken)
+    public override async Task StopAsync(CancellationToken cancellationToken)
     {
-        INotification notification;
-
-        if (_options.MessageParser.TryParse(rawMessage, out var message))
-        {
-            switch (message)
-            {
-                case {Command: Command.RECONNECT}:
-                    _ = ReconnectAsync(cancellationToken);
-                    break;
-
-                case {Command: Command.PING}:
-                    EnqueueMessage(new Message(Command.PONG));
-                    break;
-
-                case {Command: Command.PONG}:
-                    _lastPongAt = DateTimeOffset.UtcNow;
-                    break;
-            }
-
-            notification = new MessageReceived(message);
-        }
-        else
-        {
-            _logger.LogTrace("Unknown message: {Message}", rawMessage);
-
-            notification = new UnknownMessageReceived(rawMessage);
-        }
-
-        await PublishAsync(notification, cancellationToken);
+        await base.StopAsync(cancellationToken);
+        await _ws.StopAsync(cancellationToken);
     }
 
-    private async Task PublishAsync(INotification notification, CancellationToken cancellationToken)
+    async Task ITmiService.InvokeAsync<TEvent>(TEvent evt, CancellationToken cancellationToken)
     {
+        await Task.Yield();
+
+        IEnumerable<ITmiEventHandler<TEvent>> handlers;
+
+        using var scope = _scopeFactory.CreateScope();
+
         try
         {
-            await using var scope = _services.CreateAsyncScope();
-            var publisher = _options.PublisherFactory(scope.ServiceProvider);
-            await publisher.Publish(notification, cancellationToken);
+            handlers = scope.ServiceProvider.GetServices<ITmiEventHandler<TEvent>>();
         }
-        catch (OperationCanceledException) { }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error publishing {Notification}", notification.GetType().Name);
+            _logger.LogError(ex, "Error retrieving handlers from the service provider");
+            return;
+        }
+
+        foreach (var handler in handlers)
+        {
+            try
+            {
+                await handler.HandleAsync(evt, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                // ignored
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error invoking {HandlerType} handler for {EventType} event",
+                    handler.GetType(),
+                    typeof(TEvent));
+            }
         }
     }
 }

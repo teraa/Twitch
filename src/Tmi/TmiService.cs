@@ -48,8 +48,8 @@ public sealed class TmiService : BackgroundService, ITmiService
         ILogger<TmiService> logger,
         IServiceScopeFactory scopeFactory)
     {
-        _ws = ws;
         _options = options.Value;
+        _ws = ws;
         _logger = logger;
         _scopeFactory = scopeFactory;
     }

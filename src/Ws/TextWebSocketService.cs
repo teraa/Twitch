@@ -164,20 +164,19 @@ public sealed class TextWebSocketService : ITextWebSocketService
                     () => _client.ConnectAsync(_options.Uri, stoppingToken)
                 );
 
+                // Connect succeeded, invoke and await connected event handlers
+                // We await here because we want to start the writer only after the connected handlers run.
+                // That way the client can send messages before the writer resumes consuming the send queue.
+                await InvokeAsync(new ConnectedEvent(this, _connectCount++), stoppingToken);
+
                 // Create and save the reconnect CTS before starting the Reader and Writer tasks which could cancel it.
                 _reconnectCts?.Dispose();
                 _reconnectCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
 
                 // Store the tasks we're executing
-                // We assume these tasks yield immediately and never throw
+                // These tasks yield immediately and never throw
                 var readerTask = Reader(_reconnectCts.Token);
                 var writerTask = Writer(_reconnectCts.Token);
-
-                // Connect succeeded, invoke and await connected event handlers
-                // We await here because we want to signal to the writer only after the connected handlers run.
-                // That way the client can send messages before the writer resumes consuming the send queue.
-                await InvokeAsync(new ConnectedEvent(this, _connectCount++), stoppingToken);
-
 
                 // Wait for something to call BeginReconnect
                 try

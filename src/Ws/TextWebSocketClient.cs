@@ -196,7 +196,10 @@ public sealed class TextWebSocketClient : ITextWebSocketClient
         string? message = await _sr.ReadLineAsync(cancellationToken).ConfigureAwait(false);
 
         // We won't be using this stream anymore if we reached its end.
+        // We're using the stream reader on a memory stream, so we can ignore CA2024 warning.
+#pragma warning disable CA2024
         if (_sr.EndOfStream)
+#pragma warning restore CA2024
         {
             _logger.LogDebug("Reached end of message");
             _sr.Dispose();

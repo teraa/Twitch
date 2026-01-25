@@ -8,13 +8,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
-      <PackageReference Include="Microsoft.AspNetCore.Http.Extensions" Version="2.3.9" />
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
-      <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.1" />
-      <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.1" />
-      <PackageReference Include="Refit" Version="9.0.2" />
-      <PackageReference Include="Refit.HttpClientFactory" Version="9.0.2" />
+      <PackageReference Include="JetBrains.Annotations" />
+      <PackageReference Include="Microsoft.AspNetCore.Http.Extensions" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+      <PackageReference Include="Microsoft.Extensions.Http" />
+      <PackageReference Include="Microsoft.Extensions.Options" />
+      <PackageReference Include="Refit" />
+      <PackageReference Include="Refit.HttpClientFactory" />
     </ItemGroup>
 
 </Project>

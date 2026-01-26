@@ -27,39 +27,39 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
 
       - name: Restore dependencies
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build --no-restore -c Release
 
       - name: Test
-        run: dotnet test --configuration Release --no-build --verbosity minimal
+        run: dotnet test --no-build -c Release --verbosity minimal
 
       - name: Pack (Prerelease)
         id: pack-prerelease
         if: >
           (github.event_name == 'push') ||
           (github.event_name == 'workflow_dispatch')
-        run: dotnet pack --configuration Release --no-build --output nupkgs -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg --version-suffix alpha.$GITHUB_RUN_NUMBER
+        run: dotnet pack --no-build -c Release --output nupkgs -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg --version-suffix alpha.$GITHUB_RUN_NUMBER
 
       - name: Pack (Release)
         id: pack-release
         if: github.event_name == 'release'
-        run: dotnet pack --configuration Release --no-build --output nupkgs -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg
+        run: dotnet pack --no-build -c Release --output nupkgs -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg
 
       - name: Upload Artifacts
         if: >
           (steps.pack-release.outcome == 'success') ||
           (steps.pack-prerelease.outcome == 'success')
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: nupkgs
           path: nupkgs
@@ -75,12 +75,12 @@ jobs:
 
     steps:
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
 
       - name: Download Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: nupkgs
           path: nupkgs
@@ -89,13 +89,21 @@ jobs:
         if: >
           (github.event_name != 'workflow_dispatch') ||
           (github.event.inputs.github_packages == 'true')
-        run: dotnet nuget push "nupkgs/*.nupkg" --source https://nuget.pkg.github.com/teraa/index.json --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate
+        run: >
+          dotnet nuget push "nupkgs/*.nupkg"
+          --source https://nuget.pkg.github.com/teraa/index.json
+          --api-key ${{ secrets.GITHUB_TOKEN }}
+          --skip-duplicate
 
       - name: Push (NuGet.org)
         if: >
           (github.event_name == 'release') ||
           (github.event_name == 'workflow_dispatch' && github.event.inputs.nuget == 'true')
-        run: dotnet nuget push "nupkgs/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_TOKEN }} --skip-duplicate
+        run: >
+          dotnet nuget push "nupkgs/*.nupkg"
+          --source https://api.nuget.org/v3/index.json
+          --api-key ${{ secrets.NUGET_TOKEN }}
+          --skip-duplicate
 
 env:
   DOTNET_NOLOGO: true

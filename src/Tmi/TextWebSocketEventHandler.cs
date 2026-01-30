@@ -43,15 +43,15 @@ internal class MessageReceivedEventHandler : ITextWebSocketEventHandler<Ws.Messa
         {
             switch (message)
             {
-                case {Command: Command.RECONNECT}:
+                case { Command: Command.RECONNECT }:
                     await evt.Service.BeginReconnectAsync(cancellationToken);
                     break;
 
-                case {Command: Command.PING}:
+                case { Command: Command.PING }:
                     _tmi.EnqueueMessage(new Message(Command.PONG));
                     break;
 
-                case {Command: Command.PONG}:
+                case { Command: Command.PONG }:
                     _tmi.LastPongAt = DateTimeOffset.UtcNow;
                     break;
             }

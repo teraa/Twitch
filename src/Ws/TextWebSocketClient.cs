@@ -1,4 +1,4 @@
-﻿using System.Buffers;
+using System.Buffers;
 using System.IO.Pipelines;
 using System.Net.WebSockets;
 using System.Text;
@@ -122,7 +122,7 @@ public sealed class TextWebSocketClient : ITextWebSocketClient
                 );
             }
             catch (WebSocketException ex)
-                when (ex is {WebSocketErrorCode: WebSocketError.ConnectionClosedPrematurely})
+                when (ex is { WebSocketErrorCode: WebSocketError.ConnectionClosedPrematurely })
             {
                 _logger.LogDebug("WebSocket connection closed prematurely");
                 return TextWebSocketReceiveResultType.ClosedUnexpectedly;
